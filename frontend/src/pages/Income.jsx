@@ -1,0 +1,117 @@
+import { useEffect, useState } from 'react';
+import Layout from '../components/Layout';
+import Modal from '../components/Modal';
+import { incomeAPI } from '../api/services';
+
+const SOURCES = ['salary','freelance','investment','business','gift','other'];
+const EMPTY = { amount: '', source: 'salary', description: '', date: '' };
+
+export default function Income() {
+  const [items, setItems] = useState([]);
+  const [modal, setModal] = useState(null); // null | 'add' | item
+  const [form, setForm] = useState(EMPTY);
+  const [loading, setLoading] = useState(false);
+
+  const load = () => incomeAPI.list().then(({ data }) => setItems(data)).catch(() => {});
+  useEffect(() => { load(); }, []);
+
+  const openAdd = () => { setForm(EMPTY); setModal('add'); };
+  const openEdit = (item) => { setForm({ amount: item.amount, source: item.source, description: item.description || '', date: item.date }); setModal(item); };
+  const close = () => setModal(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (modal === 'add') await incomeAPI.create(form);
+      else await incomeAPI.update(modal.id, form);
+      await load();
+      close();
+    } finally { setLoading(false); }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this income entry?')) return;
+    await incomeAPI.remove(id);
+    load();
+  };
+
+  const total = items.reduce((s, i) => s + parseFloat(i.amount), 0);
+  const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+  return (
+    <Layout title="Income">
+      <div className="page-header">
+        <div>
+          <h2>Income</h2>
+          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Total: <strong style={{ color: 'var(--success)' }}>{fmt(total)}</strong></div>
+        </div>
+        <button className="btn btn-primary" onClick={openAdd}>+ Add Income</button>
+      </div>
+
+      <div className="card">
+        {items.length === 0 ? (
+          <div className="empty-state">
+            <div style={{ fontSize: 40 }}>💰</div>
+            <p>No income entries yet. Add your first one!</p>
+          </div>
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Source</th>
+                  <th>Description</th>
+                  <th>Date</th>
+                  <th>Amount</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item) => (
+                  <tr key={item.id}>
+                    <td><span className="badge badge-green">{item.source_display}</span></td>
+                    <td style={{ color: 'var(--text-muted)' }}>{item.description || '—'}</td>
+                    <td style={{ color: 'var(--text-muted)' }}>{item.date}</td>
+                    <td><strong style={{ color: 'var(--success)' }}>{fmt(item.amount)}</strong></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button className="btn btn-ghost btn-sm" onClick={() => openEdit(item)}>Edit</button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(item.id)}>Delete</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {modal && (
+        <Modal title={modal === 'add' ? 'Add Income' : 'Edit Income'} onClose={close} onSubmit={handleSubmit} loading={loading}>
+          <div className="form-row">
+            <div className="form-group">
+              <label>Amount *</label>
+              <input type="number" step="0.01" min="0" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
+            </div>
+            <div className="form-group">
+              <label>Source *</label>
+              <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
+                {SOURCES.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label>Date *</label>
+            <input type="date" required value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          </div>
+          <div className="form-group">
+            <label>Description</label>
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional notes…" />
+          </div>
+        </Modal>
+      )}
+    </Layout>
+  );
+}

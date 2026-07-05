@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Expense(models.Model):
@@ -15,7 +15,8 @@ class Expense(models.Model):
         ('other', 'Other'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='expenses')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='expenses')
+    title = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=EXPENSE_CATEGORIES)
     description = models.TextField(blank=True, null=True)

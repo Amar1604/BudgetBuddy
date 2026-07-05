@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     # Third-party
     'rest_framework',
     'corsheaders',
+    'drf_spectacular',
     # Local apps
     'users',
     'income',
@@ -88,6 +89,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+AUTH_USER_MODEL = 'users.User'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CORS
@@ -104,6 +107,15 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+# Spectacular Settings
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'BudgetBuddy API',
+    'DESCRIPTION': 'BudgetBuddy Personal Finance Management API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 # JWT

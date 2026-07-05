@@ -1,9 +1,8 @@
-from django.contrib.auth.models import User
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, UserSerializer, ProfileSerializer
-from .models import Profile
+from .models import User, Profile
 
 
 class RegisterView(generics.CreateAPIView):

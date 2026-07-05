@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Budget(models.Model):
@@ -9,7 +9,7 @@ class Budget(models.Model):
         ('yearly', 'Yearly'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='budgets')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='budgets')
     category = models.CharField(max_length=50, choices=[
         ('housing', 'Housing'),
         ('food', 'Food & Dining'),

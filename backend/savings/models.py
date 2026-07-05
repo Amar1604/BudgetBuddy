@@ -1,9 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class SavingsGoal(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='savings_goals')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='savings_goals')
     name = models.CharField(max_length=255)
     target_amount = models.DecimalField(max_digits=12, decimal_places=2)
     current_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)

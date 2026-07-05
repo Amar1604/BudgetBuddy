@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Report(models.Model):
@@ -11,7 +11,7 @@ class Report(models.Model):
         ('custom', 'Custom'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reports')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='reports')
     title = models.CharField(max_length=255)
     report_type = models.CharField(max_length=50, choices=REPORT_TYPES)
     date_range_start = models.DateField()

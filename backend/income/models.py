@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Income(models.Model):
@@ -12,7 +12,7 @@ class Income(models.Model):
         ('other', 'Other'),
     ]
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='incomes')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='incomes')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     source = models.CharField(max_length=50, choices=INCOME_SOURCES)
     description = models.TextField(blank=True, null=True)
