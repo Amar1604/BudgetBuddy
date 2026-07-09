@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
+import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
-import { reportAPI, incomeAPI, expenseAPI, budgetAPI } from '../api/services';
+import { reportAPI, incomeAPI, expenseAPI, budgetAPI } from '../services/services';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+
 
 const TYPES = ['income_summary','expense_summary','budget_vs_actual','net_worth','custom'];
 const EMPTY = { title: '', report_type: 'expense_summary', date_range_start: '', date_range_end: '' };
@@ -114,7 +116,27 @@ export default function Reports() {
                     </div>
                   </div>
 
+                  {r.data.budgetVsActual && r.data.budgetVsActual.length > 0 && (
+                    <div style={{ marginTop: 16, marginBottom: 20 }}>
+                      <strong style={{ fontSize: 13 }}>Budget vs Actual Spend</strong>
+                      <div style={{ width: '100%', height: 250, marginTop: 8 }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={r.data.budgetVsActual} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="category" tick={{ fontSize: 11 }} />
+                            <YAxis tick={{ fontSize: 11 }} />
+                            <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                            <Legend />
+                            <Bar dataKey="budget" fill="#2196f3" name="Budget Limit" radius={[4, 4, 0, 0]} />
+                            <Bar dataKey="spent" fill="#e91e63" name="Actual Spent" radius={[4, 4, 0, 0]} />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+                  )}
+
                   {Object.keys(r.data.byCategory).length > 0 && (
+
                     <div style={{ marginBottom: 12 }}>
                       <strong style={{ fontSize: 13 }}>Expenses by Category</strong>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>

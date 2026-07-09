@@ -46,7 +46,9 @@
   background: var(--primary); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-weight: 600; font-size: 13px;
+  overflow: hidden;
 }
+
 
 .page { padding: 24px; }
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }

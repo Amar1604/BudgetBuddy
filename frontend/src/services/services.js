@@ -48,5 +48,8 @@ export const reportAPI = {
 
 export const profileAPI = {
   get: () => api.get('/profile/'),
-  update: (data) => api.patch('/profile/me/', data),
+  update: (data) => api.patch('/profile/me/', data, {
+    headers: { 'Content-Type': undefined }
+  }),
 };
+

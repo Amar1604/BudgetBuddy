@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Layout from '../components/Layout';
-import { incomeAPI, expenseAPI, budgetAPI, savingsAPI } from '../api/services';
+import Layout from '../layouts/Layout';
+import { incomeAPI, expenseAPI, budgetAPI, savingsAPI } from '../services/services';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF19A3', '#19FFD8', '#8673FF'];
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -30,11 +33,52 @@ export default function Dashboard() {
         return { ...b, spent, pct };
       }).slice(0, 4);
 
-      setData({ totalIncome, totalExpenses, activeBudgets, activeGoals, recentExpenses, budgetUsage });
-    }).catch(() => {});
+      // Pie chart data: aggregate expenses by category display
+      const categoryTotals = exp.data.reduce((acc, item) => {
+        const cat = item.category_display;
+        acc[cat] = (acc[cat] || 0) + parseFloat(item.amount);
+        return acc;
+      }, {});
+
+      const pieData = Object.keys(categoryTotals).map((cat) => ({
+        name: cat,
+        value: categoryTotals[cat],
+      }));
+
+      // Bar chart data
+      const barData = [
+        { name: 'Summary', Income: totalIncome, Expenses: totalExpenses },
+      ];
+
+      setData({
+        totalIncome,
+        totalExpenses,
+        activeBudgets,
+        activeGoals,
+        recentExpenses,
+        budgetUsage,
+        pieData,
+        barData,
+      });
+    }).catch((err) => {
+      console.error("Dashboard fetch error:", err);
+      setData({
+        totalIncome: 0,
+        totalExpenses: 0,
+        activeBudgets: 0,
+        activeGoals: 0,
+        recentExpenses: [],
+        budgetUsage: [],
+        pieData: [],
+        barData: [{ name: 'Summary', Income: 0, Expenses: 0 }],
+        error: "Server connection failed."
+      });
+    });
   }, []);
 
+
   const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
 
   return (
     <Layout title="Dashboard">
@@ -42,7 +86,21 @@ export default function Dashboard() {
         <div className="loading-screen">Loading…</div>
       ) : (
         <>
+          {data.error && (
+            <div style={{
+              background: 'var(--danger-light)',
+              color: 'var(--danger)',
+              padding: '12px 16px',
+              borderRadius: 'var(--radius)',
+              marginBottom: 16,
+              fontSize: 14,
+              border: '1px solid var(--danger)'
+            }}>
+              ⚠️ {data.error} Please make sure your backend Django server is running (`python manage.py runserver`).
+            </div>
+          )}
           <div className="stat-grid">
+
             <div className="stat-card green">
               <div className="stat-label">Total Income</div>
               <div className="stat-value">{fmt(data.totalIncome)}</div>
@@ -62,6 +120,56 @@ export default function Dashboard() {
               <div className="stat-label">Active Goals</div>
               <div className="stat-value">{data.activeGoals}</div>
               <div className="stat-sub">{data.activeBudgets} budgets set</div>
+            </div>
+          </div>
+
+          {/* Charts Section */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            {/* Pie Chart: Category Breakdown */}
+            <div className="card" style={{ height: 320, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ marginBottom: 10 }}><strong>Expense Allocation</strong></div>
+              {data.pieData.length === 0 ? (
+                <div className="empty-state" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}><p>No expenses logged yet</p></div>
+              ) : (
+                <div style={{ flex: 1, minHeight: 0 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart margin={{ bottom: 20 }}>
+                      <Pie
+                        data={data.pieData}
+                        cx="50%"
+                        cy="45%"
+                        outerRadius={80}
+                        dataKey="value"
+                      >
+                        {data.pieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                      <Legend layout="horizontal" align="center" verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                </div>
+              )}
+            </div>
+
+            {/* Bar Chart: Income vs Expenses */}
+            <div className="card" style={{ height: 320, display: 'flex', flexDirection: 'column' }}>
+              <div style={{ marginBottom: 10 }}><strong>Income vs Expenses</strong></div>
+              <div style={{ flex: 1, minHeight: 0 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={data.barData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                    <Legend />
+                    <Bar dataKey="Income" fill="#4caf50" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Expenses" fill="#f44336" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
@@ -122,6 +230,7 @@ export default function Dashboard() {
               )}
             </div>
           </div>
+
         </>
       )}
     </Layout>

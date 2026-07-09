@@ -19,9 +19,12 @@ class RegisterSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    avatar = serializers.ImageField(source='profile.avatar', read_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'date_joined')
+        fields = ('id', 'username', 'email', 'date_joined', 'avatar')
+
 
 
 class ProfileSerializer(serializers.ModelSerializer):

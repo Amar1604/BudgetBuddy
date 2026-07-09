@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
+import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
-import { savingsAPI } from '../api/services';
+import { savingsAPI } from '../services/services';
 
 const EMPTY = { name: '', target_amount: '', current_amount: '0', deadline: '', description: '' };
 

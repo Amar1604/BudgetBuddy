@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../api/axios';
+import api from '../services/axios';
 
 const AuthContext = createContext(null);
 
@@ -44,17 +44,28 @@ export function AuthProvider({ children }) {
     return data.user;
   };
 
-  const logout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      const refresh = localStorage.getItem('refresh_token');
+      if (refresh) {
+        await api.post('/auth/logout/', { refresh });
+      }
+    } catch (e) {
+      console.error("Logout blacklist failed:", e);
+    } finally {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      setUser(null);
+    }
   };
 
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );
+
 }
 
 export const useAuth = () => useContext(AuthContext);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
+import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
-import { expenseAPI } from '../api/services';
+import { expenseAPI } from '../services/services';
 
 const CATEGORIES = ['housing','food','transport','utilities','healthcare','entertainment','shopping','education','other'];
 const EMPTY = { title: '', amount: '', category: 'food', description: '', date: '', merchant: '' };

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
-import { notificationAPI } from '../api/services';
+import Layout from '../layouts/Layout';
+import { notificationAPI } from '../services/services';
 import { useNotifRefresh } from '../context/NotifContext';
 
 const TYPE_BADGE = {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
+import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
-import { incomeAPI } from '../api/services';
+import { incomeAPI } from '../services/services';
 
 const SOURCES = ['salary','freelance','investment','business','gift','other'];
 const EMPTY = { amount: '', source: 'salary', description: '', date: '' };
