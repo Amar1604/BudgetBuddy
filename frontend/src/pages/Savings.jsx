@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react';
 import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
 import { savingsAPI } from '../services/services';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currency';
 
 const EMPTY = { name: '', target_amount: '', current_amount: '0', deadline: '', description: '' };
 
 export default function Savings() {
+  const { user } = useAuth();
+  const pref = user?.currency_preference || 'USD';
   const [goals, setGoals] = useState([]);
   const [modal, setModal] = useState(null);   // null | 'add' | goal-obj | {deposit: goal}
   const [form, setForm] = useState(EMPTY);
@@ -53,7 +57,7 @@ export default function Savings() {
     load();
   };
 
-  const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  const fmt = (n) => formatCurrency(n, pref);
 
   return (
     <Layout title="Savings Goals">

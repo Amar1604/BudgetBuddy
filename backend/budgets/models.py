@@ -11,15 +11,14 @@ class Budget(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='budgets')
     category = models.CharField(max_length=50, choices=[
-        ('housing', 'Housing'),
-        ('food', 'Food & Dining'),
-        ('transport', 'Transportation'),
-        ('utilities', 'Utilities'),
-        ('healthcare', 'Healthcare'),
-        ('entertainment', 'Entertainment'),
-        ('shopping', 'Shopping'),
-        ('education', 'Education'),
-        ('other', 'Other'),
+        ('FOOD', 'Food'),
+        ('TRAVEL', 'Travel'),
+        ('SHOPPING', 'Shopping'),
+        ('EDUCATION', 'Education'),
+        ('ENTERTAINMENT', 'Entertainment'),
+        ('HEALTHCARE', 'Healthcare'),
+        ('BILLS', 'Bills'),
+        ('MISCELLANEOUS', 'Miscellaneous'),
     ])
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     period = models.CharField(max_length=10, choices=PERIOD_CHOICES, default='monthly')

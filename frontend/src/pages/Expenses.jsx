@@ -2,13 +2,17 @@ import { useEffect, useState } from 'react';
 import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
 import { expenseAPI } from '../services/services';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currency';
 
-const CATEGORIES = ['housing','food','transport','utilities','healthcare','entertainment','shopping','education','other'];
-const EMPTY = { title: '', amount: '', category: 'food', description: '', date: '', merchant: '' };
+const CATEGORIES = ['FOOD','TRAVEL','SHOPPING','EDUCATION','ENTERTAINMENT','HEALTHCARE','BILLS','MISCELLANEOUS'];
+const EMPTY = { title: '', amount: '', category: 'FOOD', description: '', date: '', merchant: '' };
 
-const BADGE = { housing:'badge-blue', food:'badge-green', transport:'badge-yellow', utilities:'badge-gray', healthcare:'badge-red', entertainment:'badge-blue', shopping:'badge-yellow', education:'badge-green', other:'badge-gray' };
+const BADGE = { FOOD:'badge-green', TRAVEL:'badge-yellow', SHOPPING:'badge-blue', EDUCATION:'badge-green', ENTERTAINMENT:'badge-blue', HEALTHCARE:'badge-red', BILLS:'badge-gray', MISCELLANEOUS:'badge-gray' };
 
 export default function Expenses() {
+  const { user } = useAuth();
+  const pref = user?.currency_preference || 'USD';
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState(null);
@@ -18,7 +22,11 @@ export default function Expenses() {
   const load = () => expenseAPI.list().then(({ data }) => setItems(data)).catch(() => {});
   useEffect(() => { load(); }, []);
 
-  const openAdd = () => { setForm(EMPTY); setModal('add'); };
+  const openAdd = () => {
+    const defaultCategory = filter !== 'all' ? filter : 'FOOD';
+    setForm({ ...EMPTY, category: defaultCategory });
+    setModal('add');
+  };
   const openEdit = (item) => {
     setForm({ title: item.title, amount: item.amount, category: item.category, description: item.description || '', date: item.date, merchant: item.merchant || '' });
     setModal(item);
@@ -44,7 +52,7 @@ export default function Expenses() {
 
   const filtered = filter === 'all' ? items : items.filter((i) => i.category === filter);
   const total = filtered.reduce((s, i) => s + parseFloat(i.amount), 0);
-  const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  const fmt = (n) => formatCurrency(n, pref);
 
   return (
     <Layout title="Expenses">
@@ -64,7 +72,7 @@ export default function Expenses() {
             onClick={() => setFilter(c)}
             className={`btn btn-sm ${filter === c ? 'btn-primary' : 'btn-ghost'}`}
           >
-            {c.charAt(0).toUpperCase() + c.slice(1)}
+            {c === 'all' ? 'All' : c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()}
           </button>
         ))}
       </div>
@@ -117,7 +125,7 @@ export default function Expenses() {
             <div className="form-group">
               <label>Category *</label>
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()}</option>)}
               </select>
             </div>
           </div>

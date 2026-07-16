@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import RegisterSerializer, UserSerializer, ProfileSerializer
+from .serializers import RegisterSerializer, UserSerializer, ProfileSerializer, ChangePasswordSerializer
 from .models import User, Profile
 
 
@@ -67,4 +67,17 @@ class LogoutView(generics.GenericAPIView):
             return Response(status=status.HTTP_205_RESET_CONTENT)
         except Exception:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(generics.GenericAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = request.user
+        user.set_password(serializer.validated_data.get("new_password"))
+        user.save()
+        return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 

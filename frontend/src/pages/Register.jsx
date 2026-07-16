@@ -28,6 +28,27 @@ export default function Register() {
 
   return (
     <div className="auth-wrap">
+      <div style={{ position: 'absolute', top: 20, left: 24 }}>
+        <Link to="/" style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          textDecoration: 'none',
+          color: 'var(--text-muted)',
+          fontSize: 14,
+          fontWeight: 500,
+          padding: '6px 12px',
+          borderRadius: 6,
+          border: '1px solid var(--border)',
+          backgroundColor: 'var(--card-bg)',
+          transition: 'all 0.2s'
+        }}
+        onMouseOver={e => e.currentTarget.style.color = 'var(--primary)'}
+        onMouseOut={e => e.currentTarget.style.color = 'var(--text-muted)'}
+        >
+          ← Back to Home
+        </Link>
+      </div>
       <div className="auth-card">
         <div className="auth-logo">
           <span>💰 BudgetBuddy</span>

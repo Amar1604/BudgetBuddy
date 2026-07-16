@@ -21,14 +21,28 @@ export default function Layout({ title, children }) {
   const navigate = useNavigate();
   
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const closeDropdown = () => setDropdownOpen(false);
+    document.addEventListener('click', closeDropdown);
+    return () => document.removeEventListener('click', closeDropdown);
+  }, [dropdownOpen]);
+
+  const toggleTheme = (e) => {
+    if (e) e.stopPropagation();
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  const toggleDropdown = (e) => {
+    e.stopPropagation();
+    setDropdownOpen((prev) => !prev);
   };
 
   const handleLogout = () => { logout(); navigate('/login'); };
@@ -85,14 +99,54 @@ export default function Layout({ title, children }) {
             >
               {theme === 'dark' ? '☀️' : '🌙'}
             </button>
-            <div className="user-avatar">
-              {user?.avatar ? (
-                <img src={user.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                user?.username?.[0]?.toUpperCase()
+            <div 
+              className="profile-menu-trigger" 
+              onClick={toggleDropdown}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                cursor: 'pointer',
+                padding: '6px 12px',
+                borderRadius: 'var(--radius)',
+                position: 'relative',
+                transition: 'background-color 0.2s',
+                userSelect: 'none',
+              }}
+            >
+              <div className="user-avatar" style={{ margin: 0 }}>
+                {user?.avatar ? (
+                  <img src={user.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  user?.username?.[0]?.toUpperCase()
+                )}
+              </div>
+              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{user?.username}</span>
+              <span style={{ fontSize: 9, color: 'var(--text-muted)', opacity: 0.7 }}>▼</span>
+
+              {dropdownOpen && (
+                <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
+                  <div className="dropdown-header">
+                    <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{user?.username}</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-muted)', wordBreak: 'break-all' }}>{user?.email || 'Active User'}</span>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <NavLink to="/profile" className="dropdown-item">
+                    👤 Profile settings
+                  </NavLink>
+                  <NavLink to="/settings" className="dropdown-item">
+                    ⚙️ Settings
+                  </NavLink>
+                  <button className="dropdown-item" onClick={toggleTheme}>
+                    {theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
+                  </button>
+                  <div className="dropdown-divider"></div>
+                  <button className="dropdown-item text-danger" onClick={handleLogout}>
+                    🚪 Logout
+                  </button>
+                </div>
               )}
             </div>
-            <span style={{ fontSize: 13, color: 'var(--text-muted)' }}>{user?.username}</span>
 
           </div>
         </header>

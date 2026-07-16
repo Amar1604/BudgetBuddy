@@ -40,16 +40,35 @@ def check_budget_breach(sender, instance, created, **kwargs):
         total_spent = Expense.objects.filter(
             user=instance.user,
             category=instance.category,
-            date__gte=b_start,
-            date__lte=b_end
+            expense_date__gte=b_start,
+            expense_date__lte=b_end
         ).aggregate(Sum('amount'))['amount__sum'] or 0
 
         if total_spent > budget.amount:
+            pref = 'USD'
+            if hasattr(instance.user, 'profile'):
+                pref = instance.user.profile.currency_preference
+            
+            symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥',
+                'CAD': 'CA$',
+                'AUD': 'A$',
+                'INR': '₹',
+                'BRL': 'R$',
+                'MXN': 'Mex$',
+                'CHF': 'CHF'
+            }
+            currency_symbol = symbols.get(pref, '$')
+
             # Check if we already notified the user for this specific budget breach in this period
+            message_contains = f"exceeds your budget of {currency_symbol}{budget.amount:.2f}"
             already_notified = Notification.objects.filter(
                 user=instance.user,
                 notification_type='budget_alert',
-                message__icontains=f"exceeds your budget of ${budget.amount:.2f}",
+                message__icontains=message_contains,
                 created_at__date__gte=b_start
             ).exists()
 
@@ -57,6 +76,6 @@ def check_budget_breach(sender, instance, created, **kwargs):
                 Notification.objects.create(
                     user=instance.user,
                     title=f"Budget Alert: {instance.get_category_display()}",
-                    message=f"You have spent ${total_spent:.2f} on {instance.get_category_display()}, which exceeds your budget of ${budget.amount:.2f} for this period.",
+                    message=f"You have spent {currency_symbol}{total_spent:.2f} on {instance.get_category_display()}, which exceeds your budget of {currency_symbol}{budget.amount:.2f} for this period.",
                     notification_type='budget_alert'
                 )

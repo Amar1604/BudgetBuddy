@@ -3,10 +3,14 @@ import { Link } from 'react-router-dom';
 import Layout from '../layouts/Layout';
 import { incomeAPI, expenseAPI, budgetAPI, savingsAPI } from '../services/services';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currency';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF19A3', '#19FFD8', '#8673FF'];
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const pref = user?.currency_preference || 'USD';
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -77,7 +81,7 @@ export default function Dashboard() {
   }, []);
 
 
-  const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  const fmt = (n) => formatCurrency(n, pref);
 
 
   return (
@@ -137,15 +141,15 @@ export default function Dashboard() {
                       <Pie
                         data={data.pieData}
                         cx="50%"
-                        cy="45%"
-                        outerRadius={80}
+                        cy="50%"
+                        outerRadius={70}
                         dataKey="value"
                       >
                         {data.pieData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                      <Tooltip formatter={(value) => formatCurrency(value, pref)} />
                       <Legend layout="horizontal" align="center" verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -163,7 +167,7 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                    <Tooltip formatter={(value) => formatCurrency(value, pref)} />
                     <Legend />
                     <Bar dataKey="Income" fill="#4caf50" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="Expenses" fill="#f44336" radius={[4, 4, 0, 0]} />

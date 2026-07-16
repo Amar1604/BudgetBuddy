@@ -2,11 +2,17 @@ import { useEffect, useState } from 'react';
 import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
 import { incomeAPI } from '../services/services';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currency';
 
-const SOURCES = ['salary','freelance','investment','business','gift','other'];
-const EMPTY = { amount: '', source: 'salary', description: '', date: '' };
+const SOURCES = ['SALARY','POCKET_MONEY','SCHOLARSHIP','FREELANCING','BUSINESS','OTHER'];
+const EMPTY = { title: '', amount: '', source: 'SALARY', description: '', date: '' };
+
+const formatSource = (s) => s.replace('_', ' ').toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
 export default function Income() {
+  const { user } = useAuth();
+  const pref = user?.currency_preference || 'USD';
   const [items, setItems] = useState([]);
   const [modal, setModal] = useState(null); // null | 'add' | item
   const [form, setForm] = useState(EMPTY);
@@ -16,7 +22,7 @@ export default function Income() {
   useEffect(() => { load(); }, []);
 
   const openAdd = () => { setForm(EMPTY); setModal('add'); };
-  const openEdit = (item) => { setForm({ amount: item.amount, source: item.source, description: item.description || '', date: item.date }); setModal(item); };
+  const openEdit = (item) => { setForm({ title: item.title || 'Income Log', amount: item.amount, source: item.source, description: item.description || '', date: item.date }); setModal(item); };
   const close = () => setModal(null);
 
   const handleSubmit = async (e) => {
@@ -37,7 +43,7 @@ export default function Income() {
   };
 
   const total = items.reduce((s, i) => s + parseFloat(i.amount), 0);
-  const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  const fmt = (n) => formatCurrency(n, pref);
 
   return (
     <Layout title="Income">
@@ -60,6 +66,7 @@ export default function Income() {
             <table>
               <thead>
                 <tr>
+                  <th>Title</th>
                   <th>Source</th>
                   <th>Description</th>
                   <th>Date</th>
@@ -70,6 +77,7 @@ export default function Income() {
               <tbody>
                 {items.map((item) => (
                   <tr key={item.id}>
+                    <td><strong>{item.title || 'Income Log'}</strong></td>
                     <td><span className="badge badge-green">{item.source_display}</span></td>
                     <td style={{ color: 'var(--text-muted)' }}>{item.description || '—'}</td>
                     <td style={{ color: 'var(--text-muted)' }}>{item.date}</td>
@@ -90,6 +98,10 @@ export default function Income() {
 
       {modal && (
         <Modal title={modal === 'add' ? 'Add Income' : 'Edit Income'} onClose={close} onSubmit={handleSubmit} loading={loading}>
+          <div className="form-group" style={{ marginBottom: 12 }}>
+            <label>Title *</label>
+            <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Monthly Paycheck" />
+          </div>
           <div className="form-row">
             <div className="form-group">
               <label>Amount *</label>
@@ -98,7 +110,7 @@ export default function Income() {
             <div className="form-group">
               <label>Source *</label>
               <select value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
-                {SOURCES.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                {SOURCES.map((s) => <option key={s} value={s}>{formatSource(s)}</option>)}
               </select>
             </div>
           </div>

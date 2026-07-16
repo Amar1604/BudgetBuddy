@@ -2,12 +2,16 @@ import { useEffect, useState } from 'react';
 import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
 import { budgetAPI, expenseAPI } from '../services/services';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currency';
 
-const CATEGORIES = ['housing','food','transport','utilities','healthcare','entertainment','shopping','education','other'];
+const CATEGORIES = ['FOOD','TRAVEL','SHOPPING','EDUCATION','ENTERTAINMENT','HEALTHCARE','BILLS','MISCELLANEOUS'];
 const PERIODS = ['weekly','monthly','yearly'];
-const EMPTY = { category: 'food', amount: '', period: 'monthly', start_date: '', end_date: '' };
+const EMPTY = { category: 'FOOD', amount: '', period: 'monthly', start_date: '', end_date: '' };
 
 export default function Budgets() {
+  const { user } = useAuth();
+  const pref = user?.currency_preference || 'USD';
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [modal, setModal] = useState(null);
@@ -48,7 +52,7 @@ export default function Budgets() {
     load();
   };
 
-  const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  const fmt = (n) => formatCurrency(n, pref);
 
   return (
     <Layout title="Budgets">
@@ -110,7 +114,7 @@ export default function Budgets() {
             <div className="form-group">
               <label>Category *</label>
               <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()}</option>)}
               </select>
             </div>
             <div className="form-group">

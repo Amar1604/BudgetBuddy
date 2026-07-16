@@ -14,6 +14,12 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Password change state
+  const [pwForm, setPwForm] = useState({ old_password: '', new_password: '', confirm_password: '' });
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwError, setPwError] = useState('');
+
   useEffect(() => {
     profileAPI.get().then(({ data }) => {
       const profile = Array.isArray(data) ? data[0] : data;
@@ -53,6 +59,43 @@ export default function Profile() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePwSubmit = async (e) => {
+    e.preventDefault();
+    if (pwForm.new_password.length < 8) {
+      setPwError('New password must be at least 8 characters long.');
+      return;
+    }
+    if (pwForm.new_password !== pwForm.confirm_password) {
+      setPwError('New passwords do not match.');
+      return;
+    }
+    setPwLoading(true);
+    setPwError('');
+    setPwSuccess(false);
+    try {
+      await profileAPI.changePassword({
+        old_password: pwForm.old_password,
+        new_password: pwForm.new_password
+      });
+      setPwSuccess(true);
+      setPwForm({ old_password: '', new_password: '', confirm_password: '' });
+      setTimeout(() => setPwSuccess(false), 5000);
+    } catch (err) {
+      console.error("Password change error:", err);
+      if (err.response && err.response.data) {
+        const data = err.response.data;
+        if (data.old_password) setPwError(data.old_password[0]);
+        else if (data.new_password) setPwError(data.new_password[0]);
+        else if (data.non_field_errors) setPwError(data.non_field_errors[0]);
+        else setPwError(typeof data === 'object' ? JSON.stringify(data) : data);
+      } else {
+        setPwError('Failed to update password.');
+      }
+    } finally {
+      setPwLoading(false);
     }
   };
 
@@ -137,6 +180,50 @@ export default function Profile() {
             {saved && <div style={{ color: 'var(--success)', fontSize: 13 }}>✓ Profile saved successfully!</div>}
             <button type="submit" className="btn btn-primary" disabled={loading} style={{ alignSelf: 'flex-start' }}>
               {loading ? 'Saving…' : 'Save Changes'}
+            </button>
+          </form>
+        </div>
+
+        {/* Change Password Card */}
+        <div className="card" style={{ marginTop: 16 }}>
+          <strong style={{ fontSize: 14, display: 'block', marginBottom: 16 }}>Change Password</strong>
+          <form onSubmit={handlePwSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <div className="form-group">
+              <label>Current Password *</label>
+              <input 
+                type="password" 
+                required 
+                value={pwForm.old_password} 
+                onChange={(e) => setPwForm({ ...pwForm, old_password: e.target.value })} 
+                placeholder="Enter current password" 
+              />
+            </div>
+            <div className="form-group">
+              <label>New Password * (Min 8 characters)</label>
+              <input 
+                type="password" 
+                required 
+                value={pwForm.new_password} 
+                onChange={(e) => setPwForm({ ...pwForm, new_password: e.target.value })} 
+                placeholder="Enter new password" 
+              />
+            </div>
+            <div className="form-group">
+              <label>Confirm New Password *</label>
+              <input 
+                type="password" 
+                required 
+                value={pwForm.confirm_password} 
+                onChange={(e) => setPwForm({ ...pwForm, confirm_password: e.target.value })} 
+                placeholder="Confirm new password" 
+              />
+            </div>
+            
+            {pwError && <div className="error-msg">{pwError}</div>}
+            {pwSuccess && <div style={{ color: 'var(--success)', fontSize: 13 }}>✓ Password updated successfully!</div>}
+            
+            <button type="submit" className="btn btn-primary" disabled={pwLoading} style={{ alignSelf: 'flex-start' }}>
+              {pwLoading ? 'Updating…' : 'Update Password'}
             </button>
           </form>
         </div>

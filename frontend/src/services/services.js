@@ -51,5 +51,6 @@ export const profileAPI = {
   update: (data) => api.patch('/profile/me/', data, {
     headers: { 'Content-Type': undefined }
   }),
+  changePassword: (data) => api.post('/auth/change-password/', data),
 };
 

@@ -3,12 +3,16 @@ import Layout from '../layouts/Layout';
 import Modal from '../components/Modal';
 import { reportAPI, incomeAPI, expenseAPI, budgetAPI } from '../services/services';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currency';
 
 
 const TYPES = ['income_summary','expense_summary','budget_vs_actual','net_worth','custom'];
 const EMPTY = { title: '', report_type: 'expense_summary', date_range_start: '', date_range_end: '' };
 
 export default function Reports() {
+  const { user } = useAuth();
+  const pref = user?.currency_preference || 'USD';
   const [reports, setReports] = useState([]);
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -64,7 +68,7 @@ export default function Reports() {
     load();
   };
 
-  const fmt = (n) => `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+  const fmt = (n) => formatCurrency(n, pref);
 
   return (
     <Layout title="Reports">
@@ -125,7 +129,7 @@ export default function Reports() {
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="category" tick={{ fontSize: 11 }} />
                             <YAxis tick={{ fontSize: 11 }} />
-                            <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                            <Tooltip formatter={(value) => formatCurrency(value, pref)} />
                             <Legend />
                             <Bar dataKey="budget" fill="#2196f3" name="Budget Limit" radius={[4, 4, 0, 0]} />
                             <Bar dataKey="spent" fill="#e91e63" name="Actual Spent" radius={[4, 4, 0, 0]} />
