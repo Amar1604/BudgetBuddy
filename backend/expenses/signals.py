@@ -10,33 +10,30 @@ from notifications.models import Notification
 
 @receiver(post_save, sender=Expense)
 def check_budget_breach(sender, instance, created, **kwargs):
-    # Find active budgets for this user and category on the date of the expense
+    # Safe date parsing if instance.date is a string
+    from django.utils.dateparse import parse_date
+    d = instance.date
+    if isinstance(d, str):
+        d = parse_date(d)
+        
+    if not d:
+        return
+
+    # Find budgets matching the user, category, month, and year of the expense date
     budgets = Budget.objects.filter(
         user=instance.user,
         category=instance.category,
-        start_date__lte=instance.date
-    ).filter(Q(end_date__isnull=True) | Q(end_date__gte=instance.date))
+        month=d.month,
+        year=d.year
+    )
 
     for budget in budgets:
-        b_start = budget.start_date
-        b_end = budget.end_date
+        # Sum all expenses in this budget's month and year
+        from datetime import date
+        b_start = date(budget.year, budget.month, 1)
+        last_day = calendar.monthrange(budget.year, budget.month)[1]
+        b_end = date(budget.year, budget.month, last_day)
 
-        if not b_end:
-            if budget.period == 'monthly':
-                b_start = instance.date.replace(day=1)
-                last_day = calendar.monthrange(instance.date.year, instance.date.month)[1]
-                b_end = instance.date.replace(day=last_day)
-            elif budget.period == 'weekly':
-                b_start = instance.date - timedelta(days=instance.date.weekday())
-                b_end = b_start + timedelta(days=6)
-            elif budget.period == 'yearly':
-                b_start = instance.date.replace(month=1, day=1)
-                b_end = instance.date.replace(month=12, day=31)
-            else:
-                b_start = budget.start_date
-                b_end = instance.date
-
-        # Sum all expenses in this budget's active period
         total_spent = Expense.objects.filter(
             user=instance.user,
             category=instance.category,
@@ -44,7 +41,7 @@ def check_budget_breach(sender, instance, created, **kwargs):
             expense_date__lte=b_end
         ).aggregate(Sum('amount'))['amount__sum'] or 0
 
-        if total_spent > budget.amount:
+        if total_spent > budget.budget_amount:
             pref = 'USD'
             if hasattr(instance.user, 'profile'):
                 pref = instance.user.profile.currency_preference
@@ -64,7 +61,7 @@ def check_budget_breach(sender, instance, created, **kwargs):
             currency_symbol = symbols.get(pref, '$')
 
             # Check if we already notified the user for this specific budget breach in this period
-            message_contains = f"exceeds your budget of {currency_symbol}{budget.amount:.2f}"
+            message_contains = f"exceeds your budget of {currency_symbol}{budget.budget_amount:.2f}"
             already_notified = Notification.objects.filter(
                 user=instance.user,
                 notification_type='budget_alert',
@@ -76,6 +73,7 @@ def check_budget_breach(sender, instance, created, **kwargs):
                 Notification.objects.create(
                     user=instance.user,
                     title=f"Budget Alert: {instance.get_category_display()}",
-                    message=f"You have spent {currency_symbol}{total_spent:.2f} on {instance.get_category_display()}, which exceeds your budget of {currency_symbol}{budget.amount:.2f} for this period.",
+                    message=f"You have spent {currency_symbol}{total_spent:.2f} on {instance.get_category_display()}, which exceeds your budget of {currency_symbol}{budget.budget_amount:.2f} for this period.",
                     notification_type='budget_alert'
                 )
+

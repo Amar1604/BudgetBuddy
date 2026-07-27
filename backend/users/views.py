@@ -81,3 +81,26 @@ class ChangePasswordView(generics.GenericAPIView):
         user.save()
         return Response({"detail": "Password updated successfully."}, status=status.HTTP_200_OK)
 
+
+class ResetPasswordView(generics.GenericAPIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
+        email = request.data.get("email")
+        new_password = request.data.get("new_password")
+
+        if not username or not email or not new_password:
+            return Response({"detail": "Username, Email and New Password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 8:
+            return Response({"detail": "New password must be at least 8 characters long."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(username=username, email=email)
+            user.set_password(new_password)
+            user.save()
+            return Response({"detail": "Password reset successfully. You can now log in."}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"detail": "No user matching this username and email was found."}, status=status.HTTP_404_NOT_FOUND)
+

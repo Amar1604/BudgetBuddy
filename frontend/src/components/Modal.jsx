@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export default function Modal({ title, onClose, onSubmit, loading, children }) {
+export default function Modal({ title, onClose, onSubmit, loading, children, submitLabel = 'Save' }) {
   useEffect(() => {
     const handler = (e) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', handler);
@@ -19,7 +19,7 @@ export default function Modal({ title, onClose, onSubmit, loading, children }) {
           <div className="modal-footer">
             <button type="button" className="btn btn-ghost" onClick={onClose}>Cancel</button>
             <button type="submit" className="btn btn-primary" disabled={loading}>
-              {loading ? 'Saving…' : 'Save'}
+              {loading ? 'Saving…' : submitLabel}
             </button>
           </div>
         </form>
@@ -27,3 +27,4 @@ export default function Modal({ title, onClose, onSubmit, loading, children }) {
     </div>
   );
 }
+

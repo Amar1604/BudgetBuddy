@@ -52,5 +52,6 @@ export const profileAPI = {
     headers: { 'Content-Type': undefined }
   }),
   changePassword: (data) => api.post('/auth/change-password/', data),
+  resetPassword: (data) => api.post('/auth/reset-password/', data),
 };
 

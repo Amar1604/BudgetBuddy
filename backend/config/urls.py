@@ -5,6 +5,7 @@ from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 from users.views import ProfileViewSet
+from reports.views import DashboardAPIView
 
 # Create a router for API endpoints
 router = DefaultRouter()
@@ -19,6 +20,7 @@ urlpatterns = [
     path('api/savings-goals/', include('savings.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/reports/', include('reports.urls')),
+    path('api/dashboard/', DashboardAPIView.as_view(), name='dashboard'),
     path('api/', include(router.urls)),
     # API Documentation
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
