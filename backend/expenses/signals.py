@@ -41,39 +41,90 @@ def check_budget_breach(sender, instance, created, **kwargs):
             expense_date__lte=b_end
         ).aggregate(Sum('amount'))['amount__sum'] or 0
 
-        if total_spent > budget.budget_amount:
-            pref = 'USD'
-            if hasattr(instance.user, 'profile'):
-                pref = instance.user.profile.currency_preference
-            
-            symbols = {
-                'USD': '$',
-                'EUR': '€',
-                'GBP': '£',
-                'JPY': '¥',
-                'CAD': 'CA$',
-                'AUD': 'A$',
-                'INR': '₹',
-                'BRL': 'R$',
-                'MXN': 'Mex$',
-                'CHF': 'CHF'
-            }
-            currency_symbol = symbols.get(pref, '$')
+        total_spent = float(total_spent)
+        budget_amount = float(budget.budget_amount)
 
-            # Check if we already notified the user for this specific budget breach in this period
-            message_contains = f"exceeds your budget of {currency_symbol}{budget.budget_amount:.2f}"
+        if budget_amount > 0:
+            utilization = (total_spent / budget_amount) * 100
+        else:
+            utilization = 0.00
+
+        category_name = budget.get_category_display()
+
+        alerts_to_check = []
+        if utilization >= 100:
+            alerts_to_check.append({
+                'title': f"Budget Exceeded: {category_name}",
+                'message': f"Budget Exceeded: Your {category_name} Budget has been exceeded.",
+                'priority': 'HIGH'
+            })
+        if utilization >= 90:
+            alerts_to_check.append({
+                'title': f"Budget High Alert: {category_name}",
+                'message': f"High Alert: You have used 90% of your monthly {category_name} Budget.",
+                'priority': 'MEDIUM'
+            })
+        if utilization >= 80:
+            alerts_to_check.append({
+                'title': f"Budget Warning: {category_name}",
+                'message': f"Warning: You have used 80% of your monthly {category_name} Budget.",
+                'priority': 'LOW'
+            })
+
+        for alert in alerts_to_check:
+            # Check if we already notified the user for this specific threshold since the budget was last updated
             already_notified = Notification.objects.filter(
                 user=instance.user,
                 notification_type='budget_alert',
-                message__icontains=message_contains,
-                created_at__date__gte=b_start
+                message=alert['message'],
+                created_at__gte=budget.updated_at
             ).exists()
 
             if not already_notified:
                 Notification.objects.create(
                     user=instance.user,
-                    title=f"Budget Alert: {instance.get_category_display()}",
-                    message=f"You have spent {currency_symbol}{total_spent:.2f} on {instance.get_category_display()}, which exceeds your budget of {currency_symbol}{budget.budget_amount:.2f} for this period.",
-                    notification_type='budget_alert'
+                    title=alert['title'],
+                    message=alert['message'],
+                    notification_type='budget_alert',
+                    priority=alert['priority']
                 )
+
+
+@receiver(post_save, sender=Expense)
+def create_expense_notification(sender, instance, created, **kwargs):
+    pref = 'USD'
+    if hasattr(instance.user, 'profile'):
+        pref = instance.user.profile.currency_preference
+    
+    symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'CA$',
+        'AUD': 'A$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'MXN': 'Mex$',
+        'CHF': 'CHF'
+    }
+    currency_symbol = symbols.get(pref, '$')
+
+    if created:
+        title = f"Expense Logged: {instance.get_category_display()}"
+        message = f"An expense of {currency_symbol}{instance.amount:.2f} has been logged under '{instance.get_category_display()}' on {instance.expense_date}."
+        priority = "LOW"
+    else:
+        title = f"Expense Updated: {instance.get_category_display()}"
+        message = f"The expense under '{instance.get_category_display()}' has been updated to {currency_symbol}{instance.amount:.2f}."
+        priority = "LOW"
+
+    Notification.objects.create(
+        user=instance.user,
+        title=title,
+        message=message,
+        notification_type="info",
+        priority=priority
+    )
+
 

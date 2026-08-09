@@ -4,37 +4,46 @@ from .models import SavingsGoal
 from notifications.models import Notification
 
 @receiver(post_save, sender=SavingsGoal)
-def check_savings_goal_completion(sender, instance, created, **kwargs):
-    if instance.is_completed:
+def handle_savings_goal_notifications(sender, instance, created, **kwargs):
+    pref = 'USD'
+    if hasattr(instance.user, 'profile'):
+        pref = instance.user.profile.currency_preference
+    
+    symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'CA$',
+        'AUD': 'A$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'MXN': 'Mex$',
+        'CHF': 'CHF'
+    }
+    currency_symbol = symbols.get(pref, '$')
+
+    if created:
+        Notification.objects.create(
+            user=instance.user,
+            title=f"Savings Goal Created: {instance.goal_name}",
+            message=f"You have set a new savings goal of {currency_symbol}{instance.target_amount:.2f} for '{instance.goal_name}', target date: {instance.target_date}.",
+            notification_type='info',
+            priority='LOW'
+        )
+    elif instance.status == 'COMPLETED':
         # Check if we already notified the user for this specific savings goal completion
         already_notified = Notification.objects.filter(
             user=instance.user,
             notification_type='goal_milestone',
-            message__icontains=f"achieved your savings goal '{instance.name}'"
+            message__icontains=f"achieved your savings goal '{instance.goal_name}'"
         ).exists()
 
         if not already_notified:
-            pref = 'USD'
-            if hasattr(instance.user, 'profile'):
-                pref = instance.user.profile.currency_preference
-            
-            symbols = {
-                'USD': '$',
-                'EUR': '€',
-                'GBP': '£',
-                'JPY': '¥',
-                'CAD': 'CA$',
-                'AUD': 'A$',
-                'INR': '₹',
-                'BRL': 'R$',
-                'MXN': 'Mex$',
-                'CHF': 'CHF'
-            }
-            currency_symbol = symbols.get(pref, '$')
-
             Notification.objects.create(
                 user=instance.user,
-                title=f"Goal Achieved: {instance.name}",
-                message=f"Congratulations! You have achieved your savings goal '{instance.name}' by saving {currency_symbol}{instance.target_amount:.2f}!",
-                notification_type='goal_milestone'
+                title=f"Goal Achieved: {instance.goal_name}",
+                message=f"Congratulations! You have achieved your savings goal '{instance.goal_name}' by saving {currency_symbol}{instance.target_amount:.2f}!",
+                notification_type='goal_milestone',
+                priority='HIGH'
             )

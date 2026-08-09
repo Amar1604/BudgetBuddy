@@ -171,3 +171,58 @@ class BudgetAPITests(APITestCase):
         self.assertEqual(recent[1]['title'], "Supermarket")
         self.assertEqual(recent[1]['type'], "expense")
 
+    def test_budget_utilization_alert_thresholds(self):
+        budget = Budget.objects.create(user=self.user, category="FOOD", budget_amount=1000.00, month=7, year=2026)
+        
+        from notifications.models import Notification
+        
+        # 1. 79% spent (no notifications should trigger)
+        Expense.objects.create(user=self.user, title="Groceries", amount=790.00, category="FOOD", expense_date="2026-07-05")
+        self.assertEqual(Notification.objects.filter(user=self.user, notification_type='budget_alert').count(), 0)
+        
+        # 2. 80% spent (Warning Alert should trigger)
+        Expense.objects.create(user=self.user, title="Lunch", amount=10.00, category="FOOD", expense_date="2026-07-06")
+        notifs = Notification.objects.filter(user=self.user, notification_type='budget_alert')
+        self.assertEqual(notifs.count(), 1)
+        self.assertEqual(notifs.first().priority, "LOW")
+        self.assertIn("Warning: You have used 80% of your monthly Food Budget.", notifs.first().message)
+        
+        # 3. 85% spent (should not trigger duplicate 80% Warning Alert)
+        Expense.objects.create(user=self.user, title="Snack", amount=50.00, category="FOOD", expense_date="2026-07-07")
+        self.assertEqual(Notification.objects.filter(user=self.user, notification_type='budget_alert').count(), 1)
+        
+        # 4. 90% spent (High Warning Alert should trigger)
+        Expense.objects.create(user=self.user, title="Dinner", amount=50.00, category="FOOD", expense_date="2026-07-08")
+        notifs_90 = Notification.objects.filter(user=self.user, notification_type='budget_alert', priority="MEDIUM")
+        self.assertEqual(notifs_90.count(), 1)
+        self.assertIn("High Alert: You have used 90% of your monthly Food Budget.", notifs_90.first().message)
+        
+        # 5. 100% spent (Budget Exceeded Alert should trigger)
+        Expense.objects.create(user=self.user, title="Party", amount=100.00, category="FOOD", expense_date="2026-07-09")
+        notifs_exceeded = Notification.objects.filter(user=self.user, notification_type='budget_alert', priority="HIGH")
+        self.assertEqual(notifs_exceeded.count(), 1)
+        self.assertIn("Budget Exceeded: Your Food Budget has been exceeded.", notifs_exceeded.first().message)
+
+    def test_budget_alerts_api(self):
+        budget = Budget.objects.create(user=self.user, category="FOOD", budget_amount=1000.00, month=7, year=2026)
+        Expense.objects.create(user=self.user, title="Groceries", amount=900.00, category="FOOD", expense_date="2026-07-05")
+        
+        url = reverse('budget-alerts')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        
+        data = response.data[0]
+        self.assertEqual(data['budget_category'], "Food")
+        self.assertEqual(data['category'], "FOOD")
+        self.assertEqual(data['budget_amount'], 1000.00)
+        self.assertEqual(data['total_expense'], 900.00)
+        self.assertEqual(data['budget_utilization_percentage'], 90.0)
+        self.assertEqual(data['alert_level'], "High Warning Alert")
+        self.assertEqual(data['alert_message'], "High Alert: You have used 90% of your monthly Food Budget.")
+
+        anon_client = APIClient()
+        response_anon = anon_client.get(url)
+        self.assertEqual(response_anon.status_code, status.HTTP_401_UNAUTHORIZED)
+
+

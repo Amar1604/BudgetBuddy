@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const [dark, setDark] = useState(() => {
     return localStorage.getItem('home-theme') === 'dark';
@@ -86,13 +86,32 @@ export default function Home() {
           </button>
 
           {user ? (
-            <Link to="/dashboard" style={{
-              textDecoration: 'none', padding: '8px 18px', borderRadius: 6,
-              backgroundColor: '#4f46e5', color: '#fff', fontSize: 14, fontWeight: 600,
-              boxShadow: '0 4px 12px rgba(79,70,229,0.25)'
-            }}>
-              Go to Dashboard {'\u2192'}
-            </Link>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <Link to="/dashboard" style={{
+                textDecoration: 'none', padding: '8px 18px', borderRadius: 6,
+                backgroundColor: '#4f46e5', color: '#fff', fontSize: 14, fontWeight: 600,
+                boxShadow: '0 4px 12px rgba(79,70,229,0.25)'
+              }}>
+                Go to Dashboard {'\u2192'}
+              </Link>
+              <button 
+                onClick={logout}
+                style={{
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text)',
+                  padding: '8px 16px',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  fontFamily: 'inherit',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
           ) : (
             <>
               <Link to="/login" style={{

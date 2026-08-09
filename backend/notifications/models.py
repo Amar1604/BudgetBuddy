@@ -10,10 +10,17 @@ class Notification(models.Model):
         ('info', 'Information'),
     ]
 
+    PRIORITY_CHOICES = [
+        ('LOW', 'Low'),
+        ('MEDIUM', 'Medium'),
+        ('HIGH', 'High'),
+    ]
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='notifications')
     title = models.CharField(max_length=255)
     message = models.TextField()
     notification_type = models.CharField(max_length=50, choices=NOTIFICATION_TYPES)
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='MEDIUM')
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

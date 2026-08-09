@@ -20,6 +20,7 @@ urlpatterns = [
     path('api/savings-goals/', include('savings.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/reports/', include('reports.urls')),
+    path('api/analytics/', include('analytics.urls')),
     path('api/dashboard/', DashboardAPIView.as_view(), name='dashboard'),
     path('api/', include(router.urls)),
     # API Documentation

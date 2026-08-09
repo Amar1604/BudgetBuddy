@@ -44,6 +44,12 @@ export const reportAPI = {
   list: () => api.get('/reports/'),
   create: (data) => api.post('/reports/', data),
   remove: (id) => api.delete(`/reports/${id}/`),
+  getMonthlyFinancial: (params) => api.get('/reports/monthly-financial/', { params }),
+  getExpenseReport: (params) => api.get('/reports/expenses/', { params }),
+  getSavingsReport: () => api.get('/reports/savings/'),
+  getCombinedSummary: (params) => api.get('/reports/combined-summary/', { params }),
+  exportExpenseCSV: (params) => api.get('/reports/expenses/', { params: { ...params, export: 'csv' }, responseType: 'blob' }),
+  exportCombinedCSV: (params) => api.get('/reports/combined-summary/', { params: { ...params, export: 'csv' }, responseType: 'blob' }),
 };
 
 export const profileAPI = {
@@ -54,4 +60,13 @@ export const profileAPI = {
   changePassword: (data) => api.post('/auth/change-password/', data),
   resetPassword: (data) => api.post('/auth/reset-password/', data),
 };
+
+export const analyticsAPI = {
+  getFinancialSummary: (params) => api.get('/analytics/financial-summary/', { params }),
+  getCategoryExpenses: (params) => api.get('/analytics/category-expenses/', { params }),
+  getMonthlyTrends: (params) => api.get('/analytics/monthly-trends/', { params }),
+  getExpenseExtremes: () => api.get('/analytics/expense-extremes/'),
+  getDashboard: (params) => api.get('/analytics/dashboard/', { params }),
+};
+
 

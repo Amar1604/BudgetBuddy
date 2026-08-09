@@ -80,6 +80,46 @@ export default function Layout({ title, children }) {
           <span className="topbar-title">{title}</span>
           <div className="topbar-right">
             <button
+              onClick={() => navigate('/notifications')}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: 18,
+                cursor: 'pointer',
+                marginRight: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '6px',
+                borderRadius: '50%',
+                transition: 'background-color 0.2s',
+                position: 'relative',
+              }}
+              title="Notifications"
+              className="theme-toggle-btn"
+            >
+              🔔
+              {unread > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: -2,
+                  right: -2,
+                  backgroundColor: 'var(--danger)',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: 16,
+                  height: 16,
+                  fontSize: 9,
+                  fontWeight: 'bold',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {unread}
+                </span>
+              )}
+            </button>
+            <button
               onClick={toggleTheme}
               style={{
                 background: 'none',

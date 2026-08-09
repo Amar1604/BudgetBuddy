@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../layouts/Layout';
-import { incomeAPI, expenseAPI, budgetAPI, savingsAPI } from '../services/services';
+import { analyticsAPI } from '../services/services';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
@@ -14,39 +14,27 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
-    Promise.all([
-      incomeAPI.list(),
-      expenseAPI.list(),
-      budgetAPI.list(),
-      savingsAPI.list(),
-    ]).then(([inc, exp, bud, sav]) => {
-      const totalIncome = inc.data.reduce((s, i) => s + parseFloat(i.amount), 0);
-      const totalExpenses = exp.data.reduce((s, i) => s + parseFloat(i.amount), 0);
-      const activeBudgets = bud.data.length;
-      const activeGoals = sav.data.filter((g) => !g.is_completed).length;
+    analyticsAPI.getDashboard().then((res) => {
+      const summary = res.data.financial_summary;
+      const budgetUsageList = res.data.budget_usage || [];
+      const savingsGoalsList = res.data.active_savings_goals || [];
+      const categoryAnalysisList = res.data.category_analysis || [];
+      const recentTransactionsList = res.data.recent_transactions || [];
 
-      // recent 5 expenses
-      const recentExpenses = exp.data.slice(0, 5);
+      const totalIncome = summary.total_income;
+      const totalExpenses = summary.total_expense;
+      const activeBudgets = budgetUsageList.length;
+      const activeGoals = savingsGoalsList.length;
 
-      // budget usage: match expenses by category
-      const budgetUsage = bud.data.map((b) => {
-        const spent = exp.data
-          .filter((e) => e.category === b.category)
-          .reduce((s, e) => s + parseFloat(e.amount), 0);
-        const pct = b.amount > 0 ? Math.min((spent / parseFloat(b.amount)) * 100, 100) : 0;
-        return { ...b, spent, pct };
-      }).slice(0, 4);
+      // Filter recent expenses
+      const recentExpenses = recentTransactionsList
+        .filter((t) => t.type === 'expense')
+        .slice(0, 5);
 
-      // Pie chart data: aggregate expenses by category display
-      const categoryTotals = exp.data.reduce((acc, item) => {
-        const cat = item.category_display;
-        acc[cat] = (acc[cat] || 0) + parseFloat(item.amount);
-        return acc;
-      }, {});
-
-      const pieData = Object.keys(categoryTotals).map((cat) => ({
-        name: cat,
-        value: categoryTotals[cat],
+      // Pie chart data
+      const pieData = categoryAnalysisList.map((cat) => ({
+        name: cat.category_display,
+        value: cat.total_amount,
       }));
 
       // Bar chart data
@@ -60,7 +48,7 @@ export default function Dashboard() {
         activeBudgets,
         activeGoals,
         recentExpenses,
-        budgetUsage,
+        budgetUsage: budgetUsageList.slice(0, 4),
         pieData,
         barData,
       });
@@ -79,6 +67,7 @@ export default function Dashboard() {
       });
     });
   }, []);
+
 
 
   const fmt = (n) => formatCurrency(n, pref);
