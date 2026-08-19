@@ -23,6 +23,7 @@ export default function Layout({ title, children }) {
   
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -64,7 +65,8 @@ export default function Layout({ title, children }) {
 
   return (
     <div className="layout">
-      <aside className="sidebar">
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)}></div>}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <BrandLogo size={22} fontSize={18} />
         </div>
@@ -75,6 +77,7 @@ export default function Layout({ title, children }) {
               to={to}
               end={to === '/dashboard'}
               className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}
+              onClick={() => setSidebarOpen(false)}
             >
               <span className="icon">{icon}</span>
               {label}
@@ -91,6 +94,7 @@ export default function Layout({ title, children }) {
 
       <div className="main-content">
         <header className="topbar">
+          <button className="menu-toggle" onClick={() => setSidebarOpen(true)}>☰</button>
           <span className="topbar-title">{title}</span>
           <div className="topbar-right">
             <button
@@ -175,15 +179,17 @@ export default function Layout({ title, children }) {
                   user?.username?.[0]?.toUpperCase()
                 )}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, lineHeight: 1.2 }}>{user?.username}</span>
-                {user?.role && (
-                  <span style={{ fontSize: 9, color: user.role === 'student' ? 'var(--primary)' : user.role === 'premium' ? 'var(--success)' : 'var(--danger)', fontWeight: 700, textTransform: 'uppercase', marginTop: 1, letterSpacing: '0.04em' }}>
-                    {user.role === 'student' ? 'Student' : user.role === 'premium' ? 'Premium' : 'Admin'}
-                  </span>
-                )}
+              <div className="profile-menu-text" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, lineHeight: 1.2 }}>{user?.username}</span>
+                  {user?.role && (
+                    <span style={{ fontSize: 9, color: user.role === 'student' ? 'var(--primary)' : user.role === 'premium' ? 'var(--success)' : 'var(--danger)', fontWeight: 700, textTransform: 'uppercase', marginTop: 1, letterSpacing: '0.04em' }}>
+                      {user.role === 'student' ? 'Student' : user.role === 'premium' ? 'Premium' : 'Admin'}
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: 9, color: 'var(--text-muted)', opacity: 0.7 }}>▼</span>
               </div>
-              <span style={{ fontSize: 9, color: 'var(--text-muted)', opacity: 0.7 }}>▼</span>
 
               {dropdownOpen && (
                 <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>

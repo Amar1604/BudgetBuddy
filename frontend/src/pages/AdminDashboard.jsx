@@ -50,7 +50,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Metrics cards grid */}
-            <div className="reports-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1-fraction))', gap: 16, marginBottom: 24 }}>
+            <div className="stat-grid" style={{ marginBottom: 24 }}>
                 <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '16px 20px' }}>
                     <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>Total Accounts</span>
                     <strong style={{ fontSize: 28, color: 'var(--primary)' }}>{stats?.total_users}</strong>

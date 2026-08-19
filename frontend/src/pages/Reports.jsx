@@ -391,7 +391,7 @@ export default function Reports() {
               </div>
 
               {/* Detail Panels */}
-              <div className="reports-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div className="reports-grid">
                 
                 {/* Left Side: Expense Categories & Budgets */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

@@ -149,7 +149,7 @@ export default function Dashboard() {
             </div>
           </div>
           {/* Charts Section */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+          <div className="dashboard-grid" style={{ marginBottom: 16 }}>
             {/* Line Chart: Monthly Expense Trend */}
             <div className="card" style={{ height: 320, display: 'flex', flexDirection: 'column', gridColumn: 'span 2' }}>
               <div style={{ marginBottom: 10 }}><strong>Monthly Expense Trends</strong></div>
@@ -218,7 +218,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div className="dashboard-grid">
             {/* Recent Transactions */}
             <div className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -333,7 +333,7 @@ export default function Dashboard() {
                       borderRadius: 4,
                       fontSize: 12
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                      <div className="dashboard-notif-header">
                         <span>{n.title}</span>
                         <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{new Date(n.created_at).toLocaleDateString()}</span>
                       </div>
