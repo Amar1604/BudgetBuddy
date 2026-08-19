@@ -178,7 +178,7 @@ export default function Dashboard() {
                 <div className="empty-state" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}><p>No expenses logged yet</p></div>
               ) : (
                 <div style={{ flex: 1, minHeight: 0 }}>
-                  <ResponsiveContainer width="100%" height="100%">
+                  <ResponsiveContainer width="100%" height={240}>
                     <PieChart margin={{ bottom: 20 }}>
                       <Pie
                         data={data.pieData}
@@ -203,7 +203,7 @@ export default function Dashboard() {
             <div className="card" style={{ height: 320, display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: 10 }}><strong>Income vs Expenses</strong></div>
               <div style={{ flex: 1, minHeight: 0 }}>
-                <ResponsiveContainer width="100%" height="100%">
+                <ResponsiveContainer width="100%" height={240}>
                   <BarChart data={data.barData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" />

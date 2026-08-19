@@ -105,8 +105,10 @@ export default function Layout({ title, children }) {
 
       <div className="main-content">
         <header className="topbar">
-          <button className="menu-toggle" onClick={() => setSidebarOpen(true)}>☰</button>
-          <span className="topbar-title">{title}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button className="menu-toggle" onClick={() => setSidebarOpen(true)}>☰</button>
+            <span className="topbar-title">{title}</span>
+          </div>
           <div className="topbar-right">
             <button
               onClick={() => navigate('/notifications')}
