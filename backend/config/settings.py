@@ -172,11 +172,15 @@ if SENDGRID_API_KEY:
     }
     DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'budgetbuddy1604@gmail.com')
 else:
-    # Fallback to local SMTP (Gmail)
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = 'budgetbuddy1604@gmail.com'
-    EMAIL_HOST_PASSWORD = 'asbk wlgg zobx jmpb'
+    # Use console backend on Render to avoid blocked SMTP ports if SENDGRID_API_KEY is not configured
+    if os.getenv('RENDER') or not DEBUG:
+        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    else:
+        # Fallback to local SMTP (Gmail) for local development
+        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+        EMAIL_HOST = 'smtp.gmail.com'
+        EMAIL_PORT = 587
+        EMAIL_USE_TLS = True
+        EMAIL_HOST_USER = 'budgetbuddy1604@gmail.com'
+        EMAIL_HOST_PASSWORD = 'asbk wlgg zobx jmpb'
     DEFAULT_FROM_EMAIL = 'budgetbuddy1604@gmail.com'
