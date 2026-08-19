@@ -24,6 +24,17 @@ export default function Budgets() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (modal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [modal]);
+
   const getSpent = (category) =>
     expenses.filter((e) => e.category === category).reduce((s, e) => s + parseFloat(e.amount), 0);
 

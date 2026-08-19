@@ -23,6 +23,17 @@ export default function Expenses() {
   const load = () => expenseAPI.list().then(({ data }) => setItems(data)).catch(() => {});
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (modal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [modal]);
+
   const openAdd = () => {
     const defaultCategory = filter !== 'all' ? filter : 'FOOD';
     setForm({ ...EMPTY, category: defaultCategory });

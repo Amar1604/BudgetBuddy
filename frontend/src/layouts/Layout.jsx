@@ -37,6 +37,17 @@ export default function Layout({ title, children }) {
     return () => document.removeEventListener('click', closeDropdown);
   }, [dropdownOpen]);
 
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [sidebarOpen]);
+
   const toggleTheme = (e) => {
     if (e) e.stopPropagation();
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));

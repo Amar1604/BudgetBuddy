@@ -20,6 +20,17 @@ export default function Savings() {
   const load = () => savingsAPI.list().then(({ data }) => setGoals(data)).catch(() => {});
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (modal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [modal]);
+
   const openAdd = () => { setForm(EMPTY); setError(''); setModal('add'); };
   const openEdit = (g) => {
     setForm({ name: g.goal_name, target_amount: g.target_amount, current_amount: g.saved_amount, deadline: g.target_date || '', description: g.description || '' });

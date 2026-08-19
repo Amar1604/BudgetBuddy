@@ -24,6 +24,17 @@ export default function Income() {
 
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    if (modal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [modal]);
+
   const openAdd = () => {
     setForm(EMPTY);
     setError('');

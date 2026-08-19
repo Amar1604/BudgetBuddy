@@ -41,42 +41,17 @@ export default function Home() {
       transition: 'background-color 0.3s, color 0.3s'
     }}>
       {/* Navbar */}
-      <header style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '18px 40px',
-        borderBottom: '1px solid var(--border)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        backgroundColor: 'var(--surface)',
-        transition: 'background-color 0.3s'
-      }}>
+      <header className="landing-header">
         <BrandLogo size={24} fontSize={20} />
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="landing-header-right">
           <button
-            id="theme-toggle"
             onClick={toggleTheme}
             title={dark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--border)',
-              borderRadius: 20,
-              cursor: 'pointer',
-              padding: '6px 16px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              color: 'var(--text)',
-              fontWeight: 600,
-              fontSize: 13,
-              fontFamily: 'inherit',
-              transition: 'all 0.2s'
-            }}
+            className="landing-theme-toggle"
           >
-            {dark ? '\u2600\uFE0F Light Mode' : '\u{1F319} Dark Mode'}
+            <span>{dark ? '☀️' : '🌙'}</span>
+            <span className="theme-toggle-text">{dark ? ' Light Mode' : ' Dark Mode'}</span>
           </button>
 
           {user ? (
@@ -124,8 +99,8 @@ export default function Home() {
 
       {/* Hero */}
       <main style={{ flex: 1 }}>
-        <section style={{
-          padding: '90px 20px', textAlign: 'center', maxWidth: 900, margin: '0 auto',
+        <section className="landing-hero" style={{
+          textAlign: 'center', maxWidth: 900, margin: '0 auto',
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24
         }}>
           <div style={{
@@ -180,7 +155,7 @@ export default function Home() {
         </section>
 
         {/* Features Grid */}
-        <section style={{ padding: '60px 40px 100px', backgroundColor: 'var(--surface)', borderTop: '1px solid var(--border)', transition: 'background-color 0.3s' }}>
+        <section className="landing-features" style={{ backgroundColor: 'var(--surface)', borderTop: '1px solid var(--border)', transition: 'background-color 0.3s' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
             <h2 style={{ textAlign: 'center', fontSize: '2rem', fontWeight: 700, marginBottom: 48, color: 'var(--text)' }}>
               Features designed to keep you on track
