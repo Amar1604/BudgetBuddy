@@ -189,7 +189,7 @@
 .sidebar-overlay { display: none; }
 .dashboard-notif-header { display: flex; justify-content: space-between; font-weight: 500; gap: 12px; }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .menu-toggle {
     display: flex;
     align-items: center;

@@ -184,7 +184,7 @@ export default function Dashboard() {
                         data={data.pieData}
                         cx="50%"
                         cy="50%"
-                        outerRadius={70}
+                        outerRadius="75%"
                         dataKey="value"
                       >
                         {data.pieData.map((entry, index) => (
