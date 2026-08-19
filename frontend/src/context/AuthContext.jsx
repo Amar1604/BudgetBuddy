@@ -59,9 +59,25 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithOAuth = async (provider, tokenOrCode, extraData = {}) => {
+    const endpoint = provider === 'google' ? '/auth/oauth2/google/' : '/auth/oauth2/github/';
+    const redirectUri = `${window.location.origin}/oauth2/callback/${provider}`;
+    const payload = provider === 'google' 
+      ? { code: tokenOrCode, redirect_uri: redirectUri, ...extraData } 
+      : { code: tokenOrCode, ...extraData };
+    
+    const { data } = await api.post(endpoint, payload);
+    localStorage.setItem('access_token', data.access);
+    localStorage.setItem('refresh_token', data.refresh);
+    
+    const me = await api.get('/auth/me/');
+    setUser(me.data);
+    return me.data;
+  };
+
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, setUser, loginWithOAuth }}>
       {children}
     </AuthContext.Provider>
   );

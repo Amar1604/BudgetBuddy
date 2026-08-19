@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { BrandLogo, RupeeBagIcon } from '../components/Logo';
 
 export default function Home() {
   const { user, logout } = useAuth();
@@ -22,7 +23,7 @@ export default function Home() {
   const toggleTheme = () => setDark(d => !d);
 
   const features = [
-    { icon: '\u{1F4B0}', title: 'Income Tracking', desc: 'Log and monitor all your income sources. See earnings growth month over month.' },
+    { icon: <RupeeBagIcon size={30} />, title: 'Income Tracking', desc: 'Log and monitor all your income sources. See earnings growth month over month.' },
     { icon: '\u{1F4B8}', title: 'Expense Management', desc: 'Record daily purchases, categorize transactions, and identify saving opportunities.' },
     { icon: '\u{1F4CB}', title: 'Smart Budgets', desc: 'Set monthly budgets per category and receive alerts when you approach limits.' },
     { icon: '\u{1F3AF}', title: 'Savings Goals', desc: 'Save for milestones like vacations or emergency funds and track your progress.' },
@@ -52,14 +53,7 @@ export default function Home() {
         backgroundColor: 'var(--surface)',
         transition: 'background-color 0.3s'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 20, fontWeight: 700 }}>
-          <span>{'\u{1F4B0}'}</span>
-          <span style={{
-            background: 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>BudgetBuddy</span>
-        </div>
+        <BrandLogo size={24} fontSize={20} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
@@ -210,7 +204,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer style={{ padding: '28px 40px', textAlign: 'center', borderTop: '1px solid var(--border)', fontSize: 13, color: 'var(--text-muted)', backgroundColor: 'var(--surface)', transition: 'background-color 0.3s' }}>
-        &copy; {new Date().getFullYear()} BudgetBuddy &mdash; All rights reserved. | Milestone 2
+        &copy; {new Date().getFullYear()} BudgetBuddy &mdash; All rights reserved.
       </footer>
     </div>
   );

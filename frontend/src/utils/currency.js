@@ -12,10 +12,10 @@ export const CURRENCY_SYMBOLS = {
 };
 
 export const getCurrencySymbol = (pref) => {
-  return CURRENCY_SYMBOLS[pref] || '$';
+  return CURRENCY_SYMBOLS[pref] || '₹';
 };
 
-export const formatCurrency = (amount, pref = 'USD') => {
+export const formatCurrency = (amount, pref = 'INR') => {
   const symbol = getCurrencySymbol(pref);
   return `${symbol}${Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
 };

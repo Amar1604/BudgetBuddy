@@ -10,6 +10,8 @@ from notifications.models import Notification
 
 @receiver(post_save, sender=Expense)
 def check_budget_breach(sender, instance, created, **kwargs):
+    if kwargs.get('raw', False):
+        return
     # Safe date parsing if instance.date is a string
     from django.utils.dateparse import parse_date
     d = instance.date
@@ -92,6 +94,8 @@ def check_budget_breach(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Expense)
 def create_expense_notification(sender, instance, created, **kwargs):
+    if kwargs.get('raw', False):
+        return
     pref = 'USD'
     if hasattr(instance.user, 'profile'):
         pref = instance.user.profile.currency_preference

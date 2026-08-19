@@ -1,4 +1,5 @@
 from rest_framework import generics, permissions, status, viewsets
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import RegisterSerializer, UserSerializer, ProfileSerializer, ChangePasswordSerializer
@@ -103,4 +104,33 @@ class ResetPasswordView(generics.GenericAPIView):
             return Response({"detail": "Password reset successfully. You can now log in."}, status=status.HTTP_200_OK)
         except User.DoesNotExist:
             return Response({"detail": "No user matching this username and email was found."}, status=status.HTTP_404_NOT_FOUND)
+
+
+class SubscribePremiumAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        user.role = 'premium'
+        user.save()
+        return Response({
+            "detail": "Successfully upgraded to Premium User! All limits are now removed.",
+            "role": user.role
+        }, status=status.HTTP_200_OK)
+
+
+class RegisterFCMTokenAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        token = request.data.get('token')
+        if not token:
+            return Response({"error": "token is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        from notifications.models import FCMToken
+        fcm_token, created = FCMToken.objects.get_or_create(
+            user=request.user,
+            token=token
+        )
+        return Response({"detail": "Token registered successfully.", "created": created}, status=status.HTTP_200_OK)
 

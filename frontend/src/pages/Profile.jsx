@@ -7,7 +7,7 @@ const CURRENCIES = ['USD','EUR','GBP','JPY','CAD','AUD','INR','BRL','MXN','CHF']
 
 export default function Profile() {
   const { user, setUser } = useAuth();
-  const [form, setForm] = useState({ bio: '', currency_preference: 'USD' });
+  const [form, setForm] = useState({ username: '', bio: '', currency_preference: 'INR' });
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [saved, setSaved] = useState(false);
@@ -24,7 +24,11 @@ export default function Profile() {
     profileAPI.get().then(({ data }) => {
       const profile = Array.isArray(data) ? data[0] : data;
       if (profile) {
-        setForm({ bio: profile.bio || '', currency_preference: profile.currency_preference || 'USD' });
+        setForm({
+          username: profile.username || '',
+          bio: profile.bio || '',
+          currency_preference: profile.currency_preference || 'INR'
+        });
         setAvatarUrl(profile.avatar || '');
       }
     }).catch(() => {});
@@ -36,6 +40,7 @@ export default function Profile() {
     setError('');
 
     const formData = new FormData();
+    formData.append('username', form.username);
     formData.append('bio', form.bio);
     formData.append('currency_preference', form.currency_preference);
     if (avatarFile) {
@@ -44,9 +49,13 @@ export default function Profile() {
 
     try {
       const { data } = await profileAPI.update(formData);
-      setForm({ bio: data.bio || '', currency_preference: data.currency_preference || 'USD' });
+      setForm({
+        username: data.username || '',
+        bio: data.bio || '',
+        currency_preference: data.currency_preference || 'INR'
+      });
       setAvatarUrl(data.avatar || '');
-      setUser({ ...user, avatar: data.avatar });
+      setUser({ ...user, username: data.username, avatar: data.avatar });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
 
@@ -100,6 +109,17 @@ export default function Profile() {
   };
 
 
+  const handleUpgradePremium = async () => {
+    try {
+      const { data } = await profileAPI.subscribePremium();
+      setUser({ ...user, role: data.role });
+      alert("Success! Upgraded to Premium. All restrictions on budgets and savings goals have been removed.");
+    } catch (err) {
+      console.error("Upgrade premium error:", err);
+      alert("Failed to upgrade to Premium.");
+    }
+  };
+
   return (
     <Layout title="Profile">
       <div className="page-header">
@@ -111,6 +131,12 @@ export default function Profile() {
         <div className="card" style={{ marginBottom: 16 }}>
           <strong style={{ fontSize: 14, display: 'block', marginBottom: 12 }}>Account Info</strong>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {user?.first_name && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
+                <span style={{ color: 'var(--text-muted)' }}>Name</span>
+                <strong>{user.first_name} {user.last_name || ''}</strong>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
               <span style={{ color: 'var(--text-muted)' }}>Username</span>
               <strong>{user?.username}</strong>
@@ -119,10 +145,34 @@ export default function Profile() {
               <span style={{ color: 'var(--text-muted)' }}>Email</span>
               <strong>{user?.email || '—'}</strong>
             </div>
+            {user?.role && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Account Role</span>
+                <span className={`badge ${user.role === 'student' ? 'badge-blue' : user.role === 'premium' ? 'badge-green' : 'badge-red'}`} style={{ fontSize: 10, padding: '2px 8px', textTransform: 'uppercase', fontWeight: 700 }}>
+                  {user.role === 'student' ? 'Student' : user.role === 'premium' ? 'Premium User' : 'Admin'}
+                </span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14 }}>
               <span style={{ color: 'var(--text-muted)' }}>Member since</span>
               <strong>{user?.date_joined ? new Date(user.date_joined).toLocaleDateString() : '—'}</strong>
             </div>
+
+            {user?.role === 'student' && (
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px dashed var(--border)', display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                  Student accounts are limited to 3 budgets and 2 savings goals.
+                </span>
+                <button 
+                  type="button" 
+                  className="btn btn-primary" 
+                  onClick={handleUpgradePremium}
+                  style={{ width: '100%', justifyContent: 'center', fontSize: 13, gap: 6 }}
+                >
+                  ✨ Upgrade to Premium (Unlimited)
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -164,6 +214,17 @@ export default function Profile() {
                   style={{ fontSize: 12 }}
                 />
               </div>
+            </div>
+
+            <div className="form-group">
+              <label>Username *</label>
+              <input 
+                type="text" 
+                required 
+                value={form.username} 
+                onChange={(e) => setForm({ ...form, username: e.target.value })} 
+                placeholder="Enter username" 
+              />
             </div>
 
             <div className="form-group">

@@ -14,6 +14,17 @@ class BudgetViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Budget.objects.filter(user=self.request.user)
 
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        if getattr(user, 'role', 'student') == 'student':
+            active_budgets_count = Budget.objects.filter(user=user).count()
+            if active_budgets_count >= 3:
+                return Response(
+                    {"detail": "Student accounts are limited to a maximum of 3 active budgets. Upgrade to Premium for unlimited budgets."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        return super().create(request, *args, **kwargs)
+
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 

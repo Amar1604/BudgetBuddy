@@ -7,7 +7,7 @@ const CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'INR', 'BRL', 'MXN
 
 export default function Settings() {
   const { user } = useAuth();
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('INR');
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const [emailAlerts, setEmailAlerts] = useState(true);
   const [monthlyNewsletter, setMonthlyNewsletter] = useState(false);

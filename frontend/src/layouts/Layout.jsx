@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifCount } from '../context/NotifContext';
+import { BrandLogo, RupeeBagIcon } from '../components/Logo';
 
 const NAV = [
   { to: '/dashboard', icon: '📊', label: 'Dashboard' },
-  { to: '/income', icon: '💰', label: 'Income' },
+  { to: '/income', icon: <RupeeBagIcon size={18} />, label: 'Income' },
   { to: '/expenses', icon: '💸', label: 'Expenses' },
   { to: '/budgets', icon: '📋', label: 'Budgets' },
   { to: '/savings', icon: '🎯', label: 'Savings Goals' },
@@ -48,14 +49,27 @@ export default function Layout({ title, children }) {
   const handleLogout = () => { logout(); navigate('/login'); };
 
 
+  const navItems = [
+    { to: '/dashboard', icon: '📊', label: 'Dashboard' },
+    ...(user?.role === 'admin' ? [{ to: '/admin-dashboard', icon: '👑', label: 'Admin Panel' }] : []),
+    { to: '/income', icon: <RupeeBagIcon size={18} />, label: 'Income' },
+    { to: '/expenses', icon: '💸', label: 'Expenses' },
+    { to: '/budgets', icon: '📋', label: 'Budgets' },
+    { to: '/savings', icon: '🎯', label: 'Savings Goals' },
+    { to: '/notifications', icon: '🔔', label: 'Notifications', badge: true },
+    { to: '/reports', icon: '📈', label: 'Reports' },
+    { to: '/profile', icon: '👤', label: 'Profile' },
+    { to: '/settings', icon: '⚙️', label: 'Settings' },
+  ];
+
   return (
     <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <span>💰 BudgetBuddy</span>
+          <BrandLogo size={22} fontSize={18} />
         </div>
         <nav className="sidebar-nav">
-          {NAV.map(({ to, icon, label, badge }) => (
+          {navItems.map(({ to, icon, label, badge }) => (
             <NavLink
               key={to}
               to={to}
@@ -161,13 +175,27 @@ export default function Layout({ title, children }) {
                   user?.username?.[0]?.toUpperCase()
                 )}
               </div>
-              <span style={{ fontSize: 13, color: 'var(--text-muted)', fontWeight: 500 }}>{user?.username}</span>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: 13, color: 'var(--text)', fontWeight: 600, lineHeight: 1.2 }}>{user?.username}</span>
+                {user?.role && (
+                  <span style={{ fontSize: 9, color: user.role === 'student' ? 'var(--primary)' : user.role === 'premium' ? 'var(--success)' : 'var(--danger)', fontWeight: 700, textTransform: 'uppercase', marginTop: 1, letterSpacing: '0.04em' }}>
+                    {user.role === 'student' ? 'Student' : user.role === 'premium' ? 'Premium' : 'Admin'}
+                  </span>
+                )}
+              </div>
               <span style={{ fontSize: 9, color: 'var(--text-muted)', opacity: 0.7 }}>▼</span>
 
               {dropdownOpen && (
                 <div className="profile-dropdown" onClick={(e) => e.stopPropagation()}>
                   <div className="dropdown-header">
-                    <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{user?.username}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                      <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: 13 }}>{user?.username}</span>
+                      {user?.role && (
+                        <span className={`badge ${user.role === 'student' ? 'badge-role badge-blue' : user.role === 'premium' ? 'badge-role badge-green' : 'badge-role badge-red'}`} style={{ fontSize: 8, padding: '1px 5px', fontWeight: 800, textTransform: 'uppercase' }}>
+                          {user.role === 'student' ? 'Student' : user.role === 'premium' ? 'Premium' : 'Admin'}
+                        </span>
+                      )}
+                    </div>
                     <span style={{ fontSize: 11, color: 'var(--text-muted)', wordBreak: 'break-all' }}>{user?.email || 'Active User'}</span>
                   </div>
                   <div className="dropdown-divider"></div>

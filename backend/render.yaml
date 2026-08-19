@@ -1,0 +1,25 @@
+services:
+  # A database service
+  - type: db
+    name: budgetbuddy-db
+    ipAllowList: [] # only allow internal connections from other services
+
+  # A web service running django (Dockerized)
+  - type: web
+    name: budgetbuddy-backend
+    env: docker
+    dockerContext: backend
+    dockerfilePath: backend/Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: budgetbuddy-db
+          property: connectionString
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: "budgetbuddy-backend.onrender.com"
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://budgetbuddy-frontend.vercel.app"

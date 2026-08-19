@@ -153,3 +153,74 @@ class NotificationAPITests(APITestCase):
         self.assertEqual(mail.outbox[0].subject, "[BudgetBuddy] High Budget Warning")
         self.assertIn("test@example.com", mail.outbox[0].to)
 
+
+class LazyNotificationTests(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='testuser', password='password123')
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_lazy_notifications_generation(self):
+        from notifications.utils import generate_lazy_notifications
+        from django.core import mail
+
+        self.user.email = "lazy@example.com"
+        self.user.save()
+
+        # 1. Create a SavingsGoal in progress
+        tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+        goal = SavingsGoal.objects.create(
+            user=self.user,
+            goal_name="Test Lazy Goal",
+            target_amount=1000.00,
+            saved_amount=100.00,
+            target_date=tomorrow,
+            status='IN_PROGRESS'
+        )
+
+        # Clear creation notification so we only check the lazy one
+        Notification.objects.filter(user=self.user).delete()
+        mail.outbox.clear()
+
+        # Run lazy notifications generation with force=True (since tests default to sys.argv check)
+        generate_lazy_notifications(self.user, force=True)
+
+        # Check that notifications were created
+        # - One monthly report notification
+        # - One savings goal reminder notification
+        notifs = Notification.objects.filter(user=self.user)
+        self.assertEqual(notifs.count(), 2)
+
+        # Check titles
+        titles = [n.title for n in notifs]
+        self.assertTrue(any("Savings Reminder: Test Lazy Goal" in t for t in titles))
+        self.assertTrue(any("Monthly Report Ready:" in t for t in titles))
+
+        # Check that emails were generated
+        self.assertEqual(len(mail.outbox), 2)
+
+    def test_fcm_token_registration_and_push_notification(self):
+        # 1. Test register token endpoint
+        url = reverse('register_fcm_token')
+        data = {"token": "test_fcm_device_token_abc"}
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['created'])
+
+        # 2. Check token exists in database
+        from notifications.models import FCMToken
+        token_count = FCMToken.objects.filter(user=self.user, token="test_fcm_device_token_abc").count()
+        self.assertEqual(token_count, 1)
+
+        # 3. Trigger a notification and assert no exceptions occur when calling FCM utility
+        Notification.objects.create(
+            user=self.user,
+            title="Push Notification Trigger",
+            message="Testing FCM Integration",
+            notification_type="info",
+            priority="LOW"
+        )
+
+
+

@@ -96,6 +96,13 @@ class BudgetSerializer(serializers.ModelSerializer):
             
         if qs.exists():
             raise serializers.ValidationError("A budget for this category and month already exists.")
+
+        # Validate budget_amount must be greater than zero
+        budget_amount = attrs.get('budget_amount')
+        if budget_amount is not None and budget_amount <= 0:
+            raise serializers.ValidationError({
+                "budget_amount": "Budget limit must be greater than zero."
+            })
             
         return attrs
 

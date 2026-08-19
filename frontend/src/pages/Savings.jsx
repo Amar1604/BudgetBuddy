@@ -9,7 +9,7 @@ const EMPTY = { name: '', target_amount: '', current_amount: '0', deadline: '', 
 
 export default function Savings() {
   const { user } = useAuth();
-  const pref = user?.currency_preference || 'USD';
+  const pref = user?.currency_preference || 'INR';
   const [goals, setGoals] = useState([]);
   const [modal, setModal] = useState(null);   // null | 'add' | goal-obj | {deposit: goal}
   const [form, setForm] = useState(EMPTY);
@@ -188,7 +188,7 @@ export default function Savings() {
           <div className="form-row">
             <div className="form-group">
               <label>Target Amount *</label>
-              <input type="number" step="0.01" min="0" required value={form.target_amount} onChange={(e) => setForm({ ...form, target_amount: e.target.value })} placeholder="0.00" />
+              <input type="number" step="0.01" min="0.01" required value={form.target_amount} onChange={(e) => setForm({ ...form, target_amount: e.target.value })} placeholder="0.00" />
             </div>
             <div className="form-group">
               <label>Current Amount</label>

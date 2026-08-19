@@ -97,6 +97,64 @@ Response:
 }
 ```
 
+### 5. Google OAuth2 Authentication
+```bash
+POST /api/auth/oauth2/google/
+Content-Type: application/json
+
+{
+  "token": "google-id-token-or-auth-code"
+}
+
+Response:
+{
+  "user": {
+    "id": 1,
+    "username": "google_user_12345",
+    "email": "google_user_12345@example.com"
+  },
+  "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+}
+```
+
+### 6. GitHub OAuth2 Authentication
+```bash
+POST /api/auth/oauth2/github/
+Content-Type: application/json
+
+{
+  "code": "github-authorization-code"
+}
+
+Response:
+{
+  "user": {
+    "id": 2,
+    "username": "github_user_67890",
+    "email": "github_user_67890@example.com"
+  },
+  "access": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+  "refresh": "eyJ0eXAiOiJKV1QiLCJhbGc..."
+}
+```
+
+### 7. Register Firebase Cloud Messaging (FCM) Device Token
+```bash
+POST /api/auth/register-fcm-token/
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "token": "fcm-device-token-string"
+}
+
+Response:
+{
+  "message": "Token registered successfully"
+}
+```
+
 ---
 
 ## 💰 Income Endpoints
@@ -366,6 +424,27 @@ Response:
 - budget_vs_actual
 - net_worth
 - custom
+
+### Export Combined Statement (CSV or Excel)
+```bash
+# Export as CSV:
+GET /api/reports/combined-summary/?export=csv
+Authorization: Bearer <access_token>
+
+# Export as Excel:
+GET /api/reports/combined-summary/?export=excel
+Authorization: Bearer <access_token>
+
+Response: File download (attachment; filename="financial_statement_...")
+```
+
+### Export Monthly Report as Excel
+```bash
+GET /api/reports/monthly-financial/<id>/export-excel/
+Authorization: Bearer <access_token>
+
+Response: File download (attachment; filename="BudgetBuddy_<id>.xlsx")
+```
 
 ---
 

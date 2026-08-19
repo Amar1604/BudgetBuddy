@@ -6,6 +6,7 @@ from .views import (
     ExpenseExtremesAPIView,
     DashboardAPIView
 )
+from .admin_views import AdminStatsAPIView
 
 urlpatterns = [
     path('financial-summary/', FinancialSummaryAPIView.as_view(), name='financial-summary'),
@@ -13,4 +14,5 @@ urlpatterns = [
     path('monthly-trends/', MonthlyExpenseTrendAPIView.as_view(), name='monthly-trends'),
     path('expense-extremes/', ExpenseExtremesAPIView.as_view(), name='expense-extremes'),
     path('dashboard/', DashboardAPIView.as_view(), name='analytics-dashboard'),
+    path('admin-stats/', AdminStatsAPIView.as_view(), name='admin-stats'),
 ]

@@ -11,7 +11,7 @@ const EMPTY = { category: 'FOOD', amount: '', period: 'monthly', start_date: '',
 
 export default function Budgets() {
   const { user } = useAuth();
-  const pref = user?.currency_preference || 'USD';
+  const pref = user?.currency_preference || 'INR';
   const [budgets, setBudgets] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [modal, setModal] = useState(null);
@@ -27,23 +27,51 @@ export default function Budgets() {
   const getSpent = (category) =>
     expenses.filter((e) => e.category === category).reduce((s, e) => s + parseFloat(e.amount), 0);
 
-  const openAdd = () => { setForm(EMPTY); setModal('add'); };
+  const [error, setError] = useState('');
+
+  const openAdd = () => {
+    setForm(EMPTY);
+    setError('');
+    setModal('add');
+  };
   const openEdit = (b) => {
     setForm({ category: b.category, amount: b.amount, period: b.period, start_date: b.start_date, end_date: b.end_date || '' });
+    setError('');
     setModal(b);
   };
-  const close = () => setModal(null);
+  const close = () => {
+    setModal(null);
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       const payload = { ...form, end_date: form.end_date || null };
       if (modal === 'add') await budgetAPI.create(payload);
       else await budgetAPI.update(modal.id, payload);
       await load();
       close();
-    } finally { setLoading(false); }
+    } catch (err) {
+      console.error("Save budget failed:", err);
+      const errors = err.response?.data;
+      if (errors) {
+        const msg = Object.entries(errors)
+          .map(([key, val]) => {
+            const field = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const text = Array.isArray(val) ? val.join(' ') : val;
+            return `${field}: ${text}`;
+          })
+          .join('\n');
+        setError(msg);
+      } else {
+        setError("Failed to save budget. Please check your inputs.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -110,6 +138,20 @@ export default function Budgets() {
 
       {modal && (
         <Modal title={modal === 'add' ? 'Add Budget' : 'Edit Budget'} onClose={close} onSubmit={handleSubmit} loading={loading}>
+          {error && (
+            <div style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: 'var(--danger)',
+              padding: '10px 14px',
+              borderRadius: 'var(--radius)',
+              fontSize: 13,
+              marginBottom: 16,
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              whiteSpace: 'pre-line'
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
           <div className="form-row">
             <div className="form-group">
               <label>Category *</label>
@@ -126,7 +168,7 @@ export default function Budgets() {
           </div>
           <div className="form-group">
             <label>Budget Limit *</label>
-            <input type="number" step="0.01" min="0" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
+            <input type="number" step="0.01" min="0.01" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
           </div>
           <div className="form-row">
             <div className="form-group">

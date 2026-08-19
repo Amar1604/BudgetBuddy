@@ -1,3 +1,5 @@
+import datetime
+# pyrefly: ignore [missing-import]
 from rest_framework import serializers
 from .models import Expense
 
@@ -23,11 +25,24 @@ class ExpenseSerializer(serializers.ModelSerializer):
         
         if not expense_date_val:
             attrs['expense_date'] = date_val
+            expense_date_val = date_val
         
-        # Pop 'date' if it is a property to prevent model save issues, 
-        # or it will automatically assign to the property if SimpleModelSerializer is used
-        # We can pop it since it's not a database field
+        # Pop 'date' if it is a property to prevent model save issues
         attrs.pop('date', None)
+
+        # Validate amount must be greater than zero
+        amount = attrs.get('amount')
+        if amount is not None and amount <= 0:
+            raise serializers.ValidationError({
+                "amount": "Expense amount must be greater than zero."
+            })
+
+        # Validate expense_date is not in the future
+        if expense_date_val and expense_date_val > datetime.date.today():
+            raise serializers.ValidationError({
+                "expense_date": "Expense date cannot be in the future."
+            })
+
         return attrs
 
     def to_representation(self, instance):
@@ -35,3 +50,4 @@ class ExpenseSerializer(serializers.ModelSerializer):
         ret['date'] = instance.expense_date
         ret['expense_date'] = instance.expense_date
         return ret
+

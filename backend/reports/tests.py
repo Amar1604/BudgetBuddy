@@ -196,3 +196,39 @@ class ReportsAndDashboardTests(APITestCase):
         self.assertIn('--- FINANCIAL SUMMARY REPORT ---', content)
         self.assertIn('Total Income,5000.0', content)
 
+    def test_report_export_pdf_endpoint(self):
+        report = Report.objects.create(
+            user=self.user,
+            title="Export Report PDF",
+            report_type="expense_summary",
+            date_range_start="2026-07-01",
+            date_range_end="2026-07-31",
+            data={
+                "total_expense": 1500.0,
+                "by_category": {"FOOD": 1500.0}
+            }
+        )
+        url = reverse('report-export-pdf', kwargs={'pk': report.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/pdf')
+        self.assertIn(f'attachment; filename="BudgetBuddy_{report.id}.pdf"', response['Content-Disposition'])
+
+    def test_report_export_excel_endpoint(self):
+        report = Report.objects.create(
+            user=self.user,
+            title="Export Report Excel",
+            report_type="expense_summary",
+            date_range_start="2026-07-01",
+            date_range_end="2026-07-31",
+            data={
+                "total_expense": 1500.0,
+                "by_category": {"FOOD": 1500.0}
+            }
+        )
+        url = reverse('report-export-excel', kwargs={'pk': report.id})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response['Content-Type'], 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        self.assertIn(f'attachment; filename="BudgetBuddy_{report.id}.xlsx"', response['Content-Disposition'])
+

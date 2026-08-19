@@ -5,6 +5,8 @@ from notifications.models import Notification
 
 @receiver(post_save, sender=SavingsGoal)
 def handle_savings_goal_notifications(sender, instance, created, **kwargs):
+    if kwargs.get('raw', False):
+        return
     pref = 'USD'
     if hasattr(instance.user, 'profile'):
         pref = instance.user.profile.currency_preference

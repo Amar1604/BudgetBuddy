@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../layouts/Layout';
 import { analyticsAPI } from '../services/services';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currency';
 
@@ -10,7 +10,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF19A3'
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const pref = user?.currency_preference || 'USD';
+  const pref = user?.currency_preference || 'INR';
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -20,16 +20,16 @@ export default function Dashboard() {
       const savingsGoalsList = res.data.active_savings_goals || [];
       const categoryAnalysisList = res.data.category_analysis || [];
       const recentTransactionsList = res.data.recent_transactions || [];
+      const monthlyTrendList = res.data.monthly_trend || [];
+      const latestNotificationsList = res.data.latest_notifications || [];
 
       const totalIncome = summary.total_income;
       const totalExpenses = summary.total_expense;
       const activeBudgets = budgetUsageList.length;
       const activeGoals = savingsGoalsList.length;
 
-      // Filter recent expenses
-      const recentExpenses = recentTransactionsList
-        .filter((t) => t.type === 'expense')
-        .slice(0, 5);
+      // Slice recent combined transactions
+      const recentTransactions = recentTransactionsList.slice(0, 5);
 
       // Pie chart data
       const pieData = categoryAnalysisList.map((cat) => ({
@@ -42,15 +42,24 @@ export default function Dashboard() {
         { name: 'Summary', Income: totalIncome, Expenses: totalExpenses },
       ];
 
+      // Line chart data
+      const lineData = monthlyTrendList.map((item) => ({
+        name: `${item.month_name.slice(0, 3)} ${item.year}`,
+        Amount: item.total_amount,
+      }));
+
       setData({
         totalIncome,
         totalExpenses,
         activeBudgets,
         activeGoals,
-        recentExpenses,
+        recentTransactions,
         budgetUsage: budgetUsageList.slice(0, 4),
         pieData,
         barData,
+        lineData,
+        activeSavingsGoals: savingsGoalsList.slice(0, 4),
+        latestNotifications: latestNotificationsList.slice(0, 5),
       });
     }).catch((err) => {
       console.error("Dashboard fetch error:", err);
@@ -59,10 +68,13 @@ export default function Dashboard() {
         totalExpenses: 0,
         activeBudgets: 0,
         activeGoals: 0,
-        recentExpenses: [],
+        recentTransactions: [],
         budgetUsage: [],
         pieData: [],
         barData: [{ name: 'Summary', Income: 0, Expenses: 0 }],
+        lineData: [],
+        activeSavingsGoals: [],
+        latestNotifications: [],
         error: "Server connection failed."
       });
     });
@@ -70,8 +82,29 @@ export default function Dashboard() {
 
 
 
-  const fmt = (n) => formatCurrency(n, pref);
+  const tooltipStyle = {
+    contentStyle: {
+      backgroundColor: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      boxShadow: 'var(--shadow-md)',
+      color: 'var(--text)',
+      fontSize: '13px',
+      fontFamily: 'inherit',
+      padding: '8px 12px'
+    },
+    itemStyle: {
+      color: 'var(--text)',
+      fontWeight: '500'
+    },
+    labelStyle: {
+      color: 'var(--text-muted)',
+      fontWeight: '600',
+      marginBottom: '4px'
+    }
+  };
 
+  const fmt = (n) => formatCurrency(n, pref);
 
   return (
     <Layout title="Dashboard">
@@ -115,9 +148,29 @@ export default function Dashboard() {
               <div className="stat-sub">{data.activeBudgets} budgets set</div>
             </div>
           </div>
-
           {/* Charts Section */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+            {/* Line Chart: Monthly Expense Trend */}
+            <div className="card" style={{ height: 320, display: 'flex', flexDirection: 'column', gridColumn: 'span 2' }}>
+              <div style={{ marginBottom: 10 }}><strong>Monthly Expense Trends</strong></div>
+              {data.lineData.length === 0 ? (
+                <div className="empty-state" style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}><p>No historical monthly trends found.</p></div>
+              ) : (
+                <div style={{ flex: 1, minHeight: 0 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={data.lineData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip {...tooltipStyle} formatter={(value) => formatCurrency(value, pref)} />
+                      <Legend />
+                      <Line type="monotone" dataKey="Amount" stroke="#AF19FF" strokeWidth={2} activeDot={{ r: 8 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </div>
+
             {/* Pie Chart: Category Breakdown */}
             <div className="card" style={{ height: 320, display: 'flex', flexDirection: 'column' }}>
               <div style={{ marginBottom: 10 }}><strong>Expense Allocation</strong></div>
@@ -135,14 +188,13 @@ export default function Dashboard() {
                         dataKey="value"
                       >
                         {data.pieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip formatter={(value) => formatCurrency(value, pref)} />
+                      <Tooltip {...tooltipStyle} formatter={(value) => formatCurrency(value, pref)} />
                       <Legend layout="horizontal" align="center" verticalAlign="bottom" iconType="circle" wrapperStyle={{ fontSize: 12 }} />
                     </PieChart>
                   </ResponsiveContainer>
-
                 </div>
               )}
             </div>
@@ -156,10 +208,10 @@ export default function Dashboard() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip formatter={(value) => formatCurrency(value, pref)} />
+                    <Tooltip {...tooltipStyle} cursor={{ fill: 'rgba(128, 128, 128, 0.08)', radius: 8 }} formatter={(value) => formatCurrency(value, pref)} />
                     <Legend />
-                    <Bar dataKey="Income" fill="#4caf50" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Expenses" fill="#f44336" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="Income" fill="#4caf50" radius={[4, 4, 0, 0]} activeBar={{ fill: '#81c784', stroke: '#4caf50', strokeWidth: 1 }} />
+                    <Bar dataKey="Expenses" fill="#f44336" radius={[4, 4, 0, 0]} activeBar={{ fill: '#e57373', stroke: '#f44336', strokeWidth: 1 }} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -167,23 +219,29 @@ export default function Dashboard() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            {/* Recent Expenses */}
+            {/* Recent Transactions */}
             <div className="card">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                <strong>Recent Expenses</strong>
-                <Link to="/expenses" style={{ fontSize: 13 }}>View all →</Link>
+                <strong>Recent Transactions</strong>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <Link to="/income" style={{ fontSize: 12 }}>Income</Link>
+                  <span style={{ color: 'var(--border)' }}>|</span>
+                  <Link to="/expenses" style={{ fontSize: 12 }}>Expenses</Link>
+                </div>
               </div>
-              {data.recentExpenses.length === 0 ? (
-                <div className="empty-state"><p>No expenses yet</p></div>
+              {data.recentTransactions.length === 0 ? (
+                <div className="empty-state"><p>No transactions logged yet</p></div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {data.recentExpenses.map((e) => (
-                    <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {data.recentTransactions.map((t, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-light)', paddingBottom: 8 }}>
                       <div>
-                        <div style={{ fontWeight: 500 }}>{e.title}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{e.category_display} · {e.date}</div>
+                        <div style={{ fontWeight: 500, fontSize: 14 }}>{t.title}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{t.category_display} · {t.date}</div>
                       </div>
-                      <span style={{ fontWeight: 600, color: 'var(--danger)' }}>{fmt(e.amount)}</span>
+                      <span style={{ fontWeight: 600, color: t.type === 'income' ? 'var(--success)' : 'var(--danger)' }}>
+                        {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -217,6 +275,69 @@ export default function Dashboard() {
                           }}
                         />
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Savings Goals Progress */}
+            <div className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <strong>Savings Progress</strong>
+                <Link to="/savings" style={{ fontSize: 13 }}>View all →</Link>
+              </div>
+              {data.activeSavingsGoals.length === 0 ? (
+                <div className="empty-state"><p>No active savings goals found.</p></div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  {data.activeSavingsGoals.map((g) => {
+                    const pct = parseFloat(g.progress_percentage || 0);
+                    return (
+                      <div key={g.id}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
+                          <span>{g.goal_name}</span>
+                          <span style={{ color: 'var(--text-muted)' }}>{fmt(g.saved_amount)} / {fmt(g.target_amount)}</span>
+                        </div>
+                        <div className="progress-bar">
+                          <div
+                            className="progress-fill"
+                            style={{
+                              width: `${pct}%`,
+                              background: pct >= 100 ? 'var(--success)' : 'var(--primary)',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Recent Alerts */}
+            <div className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+                <strong>Recent Alerts & Reminders</strong>
+                <Link to="/notifications" style={{ fontSize: 13 }}>Inbox →</Link>
+              </div>
+              {data.latestNotifications.length === 0 ? (
+                <div className="empty-state"><p>No recent alerts.</p></div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {data.latestNotifications.map((n) => (
+                    <div key={n.id} style={{
+                      padding: '8px 10px',
+                      borderLeft: `3px solid ${n.priority === 'High' ? 'var(--danger)' : n.priority === 'Medium' ? 'var(--warning)' : 'var(--primary)'}`,
+                      backgroundColor: 'var(--bg)',
+                      borderRadius: 4,
+                      fontSize: 12
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 500 }}>
+                        <span>{n.title}</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{new Date(n.created_at).toLocaleDateString()}</span>
+                      </div>
+                      <div style={{ color: 'var(--text-muted)', marginTop: 2 }}>{n.message}</div>
                     </div>
                   ))}
                 </div>

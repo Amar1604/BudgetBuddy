@@ -184,6 +184,8 @@ class DashboardAPIView(APIView):
 
     def get(self, request):
         user = request.user
+        from notifications.utils import generate_lazy_notifications
+        generate_lazy_notifications(user)
         now = timezone.now()
         
         try:

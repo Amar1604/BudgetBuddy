@@ -10,6 +10,8 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get_queryset(self):
+        from .utils import generate_lazy_notifications
+        generate_lazy_notifications(self.request.user)
         return Notification.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):

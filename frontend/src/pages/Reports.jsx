@@ -11,11 +11,123 @@ const EMPTY = { title: '', report_type: 'expense_summary', date_range_start: '',
 
 export default function Reports() {
   const { user } = useAuth();
-  const pref = user?.currency_preference || 'USD';
+  const pref = user?.currency_preference || 'INR';
   const fmt = (n) => formatCurrency(n, pref);
+
+  const tooltipStyle = {
+    contentStyle: {
+      backgroundColor: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius)',
+      boxShadow: 'var(--shadow-md)',
+      color: 'var(--text)',
+      fontSize: '13px',
+      fontFamily: 'inherit',
+      padding: '8px 12px'
+    },
+    itemStyle: {
+      color: 'var(--text)',
+      fontWeight: '500'
+    },
+    labelStyle: {
+      color: 'var(--text-muted)',
+      fontWeight: '600',
+      marginBottom: '4px'
+    }
+  };
 
   // Tabs: 'interactive' or 'saved'
   const [activeTab, setActiveTab] = useState('interactive');
+
+  const handleDownloadPDF = async (reportId) => {
+    console.log("handleDownloadPDF called for reportId:", reportId);
+    try {
+      const response = await reportAPI.exportPDF(reportId);
+      console.log("PDF download API response status:", response.status);
+      console.log("PDF response.data type:", typeof response.data, "Constructor:", response.data ? response.data.constructor.name : 'null');
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `BudgetBuddy_Report_${reportId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      console.log("PDF download triggered successfully.");
+    } catch (err) {
+      console.error("Failed to download PDF:", err);
+      alert("Failed to download PDF report. Error: " + (err.message || err));
+    }
+  };
+
+  const handleDownloadExcel = async (reportId) => {
+    console.log("handleDownloadExcel called for reportId:", reportId);
+    try {
+      const response = await reportAPI.exportExcel(reportId);
+      console.log("Excel download API response status:", response.status);
+      console.log("Excel response.data type:", typeof response.data, "Constructor:", response.data ? response.data.constructor.name : 'null');
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `BudgetBuddy_Report_${reportId}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      console.log("Excel download triggered successfully.");
+    } catch (err) {
+      console.error("Failed to download Excel:", err);
+      alert("Failed to download Excel report. Error: " + (err.message || err));
+    }
+  };
+
+  const handleDownloadCombinedPDF = async () => {
+    try {
+      const params = {
+        filter_type: filterType,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+      };
+      const response = await reportAPI.exportCombinedPDF(params);
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `BudgetBuddy_LiveStatement_${filterType}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download Live PDF:", err);
+      alert("Failed to download PDF report. Error: " + (err.message || err));
+    }
+  };
+
+  const handleDownloadCombinedExcel = async () => {
+    try {
+      const params = {
+        filter_type: filterType,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined,
+      };
+      const response = await reportAPI.exportCombinedExcel(params);
+      const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `BudgetBuddy_LiveStatement_${filterType}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download Live Excel:", err);
+      alert("Failed to download Excel report. Error: " + (err.message || err));
+    }
+  };
 
   // Saved Reports State
   const [reports, setReports] = useState([]);
@@ -147,7 +259,8 @@ export default function Reports() {
 
   return (
     <Layout title="Reports">
-      <div className="page-header">
+      <div className="reports-page-wrapper">
+        <div className="page-header">
         <h2>Financial Reports</h2>
         {activeTab === 'saved' && (
           <button className="btn btn-primary" onClick={() => { setForm(EMPTY); setModal(true); }}>+ Generate Report</button>
@@ -216,6 +329,22 @@ export default function Reports() {
 
               <div style={{ display: 'flex', gap: 10 }}>
                 <button
+                  id="live-export-pdf"
+                  className="btn btn-ghost"
+                  disabled={liveLoading}
+                  onClick={handleDownloadCombinedPDF}
+                >
+                  📄 Export PDF
+                </button>
+                <button
+                  id="live-export-excel"
+                  className="btn btn-ghost"
+                  disabled={liveLoading}
+                  onClick={handleDownloadCombinedExcel}
+                >
+                  📊 Export Excel
+                </button>
+                <button
                   className="btn btn-outline"
                   disabled={exportLoading || liveLoading}
                   onClick={() => handleExportCSV('expenses')}
@@ -236,7 +365,7 @@ export default function Reports() {
           {liveLoading && !liveData ? (
             <div className="card" style={{ textAlign: 'center', padding: 40 }}>Loading statement data...</div>
           ) : liveData ? (
-            <>
+            <div id="interactive-statement-container" style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {/* Financial Summary Stat Cards */}
               <div className="stat-grid">
                 <div className="stat-card green">
@@ -262,7 +391,7 @@ export default function Reports() {
               </div>
 
               {/* Detail Panels */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div className="reports-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 
                 {/* Left Side: Expense Categories & Budgets */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -388,7 +517,7 @@ export default function Reports() {
                 </div>
 
               </div>
-            </>
+            </div>
           ) : (
             <div className="card" style={{ textAlign: 'center', padding: 40 }}>Failed to load statement details.</div>
           )}
@@ -408,7 +537,7 @@ export default function Reports() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {reports.map((r) => (
-                <div key={r.id} className="card">
+                <div key={r.id} className="card" id={`report-card-${r.id}`}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                       <strong style={{ fontSize: 15 }}>{r.title}</strong>
@@ -417,6 +546,24 @@ export default function Reports() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
+                      {expanded === r.id && (
+                        <>
+                          <button
+                            id={`saved-export-pdf-${r.id}`}
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleDownloadPDF(r.id)}
+                          >
+                            📄 Download PDF
+                          </button>
+                          <button
+                            id={`saved-export-excel-${r.id}`}
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => handleDownloadExcel(r.id)}
+                          >
+                            📊 Download Excel
+                          </button>
+                        </>
+                      )}
                       <button className="btn btn-ghost btn-sm" onClick={() => setExpanded(expanded === r.id ? null : r.id)}>
                         {expanded === r.id ? 'Hide' : 'View'}
                       </button>
@@ -426,20 +573,59 @@ export default function Reports() {
 
                   {expanded === r.id && r.data && (
                     <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                      <div className="stat-grid" style={{ marginBottom: 16 }}>
-                        <div className="stat-card green">
-                          <div className="stat-label">Total Income</div>
-                          <div className="stat-value" style={{ fontSize: 20 }}>{fmt(r.data.totalIncome)}</div>
-                        </div>
-                        <div className="stat-card red">
-                          <div className="stat-label">Total Expenses</div>
-                          <div className="stat-value" style={{ fontSize: 20 }}>{fmt(r.data.totalExpenses)}</div>
-                        </div>
-                        <div className="stat-card blue">
-                          <div className="stat-label">Net Balance</div>
-                          <div className="stat-value" style={{ fontSize: 20 }}>{fmt(r.data.netBalance)}</div>
-                        </div>
-                      </div>
+                      {(() => {
+                        const isBudget = r.report_type === 'budget_vs_actual';
+                        
+                        if (isBudget) {
+                          const budgetLimit = r.data.total_budget !== undefined ? r.data.total_budget : 0;
+                          const actualSpent = r.data.total_actual !== undefined ? r.data.total_actual : 0;
+                          const variance = budgetLimit - actualSpent;
+                          
+                          return (
+                            <div className="stat-grid" style={{ marginBottom: 16 }}>
+                              <div className="stat-card blue">
+                                <div className="stat-label">Total Budget Limit</div>
+                                <div className="stat-value" style={{ fontSize: 20 }}>{fmt(budgetLimit)}</div>
+                              </div>
+                              <div className="stat-card red">
+                                <div className="stat-label">Actual Spent</div>
+                                <div className="stat-value" style={{ fontSize: 20 }}>{fmt(actualSpent)}</div>
+                              </div>
+                              <div className={`stat-card ${variance >= 0 ? 'green' : 'red'}`}>
+                                <div className="stat-label">Remaining Variance</div>
+                                <div className="stat-value" style={{ fontSize: 20 }}>{fmt(variance)}</div>
+                              </div>
+                            </div>
+                          );
+                        } else {
+                          const incVal = r.data.totalIncome !== undefined 
+                            ? r.data.totalIncome 
+                            : (r.data.total_income !== undefined ? r.data.total_income : 0);
+                          const expVal = r.data.totalExpenses !== undefined 
+                            ? r.data.totalExpenses 
+                            : (r.data.total_expense !== undefined ? r.data.total_expense : (r.data.total_actual !== undefined ? r.data.total_actual : 0));
+                          const balVal = r.data.netBalance !== undefined 
+                            ? r.data.netBalance 
+                            : (r.data.net_savings !== undefined ? r.data.net_savings : (incVal - expVal));
+                          
+                          return (
+                            <div className="stat-grid" style={{ marginBottom: 16 }}>
+                              <div className="stat-card green">
+                                <div className="stat-label">Total Income</div>
+                                <div className="stat-value" style={{ fontSize: 20 }}>{fmt(incVal)}</div>
+                              </div>
+                              <div className="stat-card red">
+                                <div className="stat-label">Total Expenses</div>
+                                <div className="stat-value" style={{ fontSize: 20 }}>{fmt(expVal)}</div>
+                              </div>
+                              <div className="stat-card blue">
+                                <div className="stat-label">Net Balance</div>
+                                <div className="stat-value" style={{ fontSize: 20 }}>{fmt(balVal)}</div>
+                              </div>
+                            </div>
+                          );
+                        }
+                      })()}
 
                       {r.data.budgetVsActual && r.data.budgetVsActual.length > 0 && (
                         <div style={{ marginTop: 16, marginBottom: 20 }}>
@@ -450,10 +636,10 @@ export default function Reports() {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="category" tick={{ fontSize: 11 }} />
                                 <YAxis tick={{ fontSize: 11 }} />
-                                <Tooltip formatter={(value) => formatCurrency(value, pref)} />
+                                <Tooltip {...tooltipStyle} cursor={{ fill: 'rgba(128, 128, 128, 0.08)', radius: 8 }} formatter={(value) => formatCurrency(value, pref)} />
                                 <Legend />
-                                <Bar dataKey="budget" fill="#2196f3" name="Budget Limit" radius={[4, 4, 0, 0]} />
-                                <Bar dataKey="spent" fill="#e91e63" name="Actual Spent" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="budget" fill="#2196f3" name="Budget Limit" radius={[4, 4, 0, 0]} activeBar={{ fill: '#64b5f6', stroke: '#2196f3', strokeWidth: 1 }} />
+                                <Bar dataKey="spent" fill="#e91e63" name="Actual Spent" radius={[4, 4, 0, 0]} activeBar={{ fill: '#f06292', stroke: '#e91e63', strokeWidth: 1 }} />
                               </BarChart>
                             </ResponsiveContainer>
                           </div>
@@ -518,6 +704,7 @@ export default function Reports() {
           </div>
         </Modal>
       )}
+      </div>
     </Layout>
   );
 }

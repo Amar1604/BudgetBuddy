@@ -50,6 +50,10 @@ export const reportAPI = {
   getCombinedSummary: (params) => api.get('/reports/combined-summary/', { params }),
   exportExpenseCSV: (params) => api.get('/reports/expenses/', { params: { ...params, export: 'csv' }, responseType: 'blob' }),
   exportCombinedCSV: (params) => api.get('/reports/combined-summary/', { params: { ...params, export: 'csv' }, responseType: 'blob' }),
+  exportPDF: (id) => api.get(`/reports/${id}/export-pdf/`, { responseType: 'blob' }),
+  exportExcel: (id) => api.get(`/reports/${id}/export-excel/`, { responseType: 'blob' }),
+  exportCombinedPDF: (params) => api.get('/reports/combined-summary/', { params: { ...params, export: 'pdf' }, responseType: 'blob' }),
+  exportCombinedExcel: (params) => api.get('/reports/combined-summary/', { params: { ...params, export: 'excel' }, responseType: 'blob' }),
 };
 
 export const profileAPI = {
@@ -59,6 +63,10 @@ export const profileAPI = {
   }),
   changePassword: (data) => api.post('/auth/change-password/', data),
   resetPassword: (data) => api.post('/auth/reset-password/', data),
+  resetPasswordRequest: (data) => api.post('/auth/reset-password/request/', data),
+  resetPasswordConfirm: (data) => api.post('/auth/reset-password/confirm/', data),
+  subscribePremium: () => api.post('/auth/subscribe-premium/'),
+  registerFCMToken: (token) => api.post('/auth/register-fcm-token/', { token }),
 };
 
 export const analyticsAPI = {

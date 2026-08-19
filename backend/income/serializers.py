@@ -25,6 +25,14 @@ class IncomeSerializer(serializers.ModelSerializer):
             attrs['income_date'] = date_val
         
         attrs.pop('date', None)
+
+        # Validate amount must be greater than zero
+        amount = attrs.get('amount')
+        if amount is not None and amount <= 0:
+            raise serializers.ValidationError({
+                "amount": "Income amount must be greater than zero."
+            })
+
         return attrs
 
     def to_representation(self, instance):
@@ -32,3 +40,4 @@ class IncomeSerializer(serializers.ModelSerializer):
         ret['date'] = instance.income_date
         ret['income_date'] = instance.income_date
         return ret
+

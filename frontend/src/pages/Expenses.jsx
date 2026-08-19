@@ -12,12 +12,13 @@ const BADGE = { FOOD:'badge-green', TRAVEL:'badge-yellow', SHOPPING:'badge-blue'
 
 export default function Expenses() {
   const { user } = useAuth();
-  const pref = user?.currency_preference || 'USD';
+  const pref = user?.currency_preference || 'INR';
   const [items, setItems] = useState([]);
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const load = () => expenseAPI.list().then(({ data }) => setItems(data)).catch(() => {});
   useEffect(() => { load(); }, []);
@@ -25,23 +26,46 @@ export default function Expenses() {
   const openAdd = () => {
     const defaultCategory = filter !== 'all' ? filter : 'FOOD';
     setForm({ ...EMPTY, category: defaultCategory });
+    setError('');
     setModal('add');
   };
   const openEdit = (item) => {
     setForm({ title: item.title, amount: item.amount, category: item.category, description: item.description || '', date: item.date, merchant: item.merchant || '' });
+    setError('');
     setModal(item);
   };
-  const close = () => setModal(null);
+  const close = () => {
+    setModal(null);
+    setError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       if (modal === 'add') await expenseAPI.create(form);
       else await expenseAPI.update(modal.id, form);
       await load();
       close();
-    } finally { setLoading(false); }
+    } catch (err) {
+      console.error("Save expense failed:", err);
+      const errors = err.response?.data;
+      if (errors) {
+        const msg = Object.entries(errors)
+          .map(([key, val]) => {
+            const field = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+            const text = Array.isArray(val) ? val.join(' ') : val;
+            return `${field}: ${text}`;
+          })
+          .join('\n');
+        setError(msg);
+      } else {
+        setError("Failed to save expense. Please check your inputs.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (id) => {
@@ -61,7 +85,10 @@ export default function Expenses() {
           <h2>Expenses</h2>
           <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Showing: <strong style={{ color: 'var(--danger)' }}>{fmt(total)}</strong></div>
         </div>
-        <button className="btn btn-primary" onClick={openAdd}>+ Add Expense</button>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-ghost" onClick={() => window.print()}>🖨️ Export PDF</button>
+          <button className="btn btn-primary" onClick={openAdd}>+ Add Expense</button>
+        </div>
       </div>
 
       {/* Category filter */}
@@ -92,7 +119,14 @@ export default function Expenses() {
               <tbody>
                 {filtered.map((item) => (
                   <tr key={item.id}>
-                    <td><strong>{item.title}</strong></td>
+                    <td>
+                      <strong>{item.title}</strong>
+                      {item.description && (
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2, fontWeight: 'normal' }}>
+                          {item.description}
+                        </div>
+                      )}
+                    </td>
                     <td><span className={`badge ${BADGE[item.category] || 'badge-gray'}`}>{item.category_display}</span></td>
                     <td style={{ color: 'var(--text-muted)' }}>{item.merchant || '—'}</td>
                     <td style={{ color: 'var(--text-muted)' }}>{item.date}</td>
@@ -113,6 +147,20 @@ export default function Expenses() {
 
       {modal && (
         <Modal title={modal === 'add' ? 'Add Expense' : 'Edit Expense'} onClose={close} onSubmit={handleSubmit} loading={loading}>
+          {error && (
+            <div style={{
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: 'var(--danger)',
+              padding: '10px 14px',
+              borderRadius: 'var(--radius)',
+              fontSize: 13,
+              marginBottom: 16,
+              border: '1px solid rgba(239, 68, 68, 0.2)',
+              whiteSpace: 'pre-line'
+            }}>
+              ⚠️ {error}
+            </div>
+          )}
           <div className="form-group">
             <label>Title *</label>
             <input required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="e.g. Grocery run" />
@@ -120,7 +168,7 @@ export default function Expenses() {
           <div className="form-row">
             <div className="form-group">
               <label>Amount *</label>
-              <input type="number" step="0.01" min="0" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
+              <input type="number" step="0.01" min="0.01" required value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" />
             </div>
             <div className="form-group">
               <label>Category *</label>

@@ -6,6 +6,8 @@ from notifications.models import Notification
 
 @receiver(post_save, sender=Budget)
 def create_budget_notification(sender, instance, created, **kwargs):
+    if kwargs.get('raw', False):
+        return
     pref = 'USD'
     if hasattr(instance.user, 'profile'):
         pref = instance.user.profile.currency_preference

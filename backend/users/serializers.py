@@ -24,18 +24,31 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ('id', 'username', 'email', 'date_joined', 'avatar', 'currency_preference')
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'date_joined', 'avatar', 'currency_preference', 'role')
 
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(source='user.username', read_only=True)
+    username = serializers.CharField(source='user.username', required=False)
     email = serializers.CharField(source='user.email', read_only=True)
+    role = serializers.CharField(source='user.role', read_only=True)
 
     class Meta:
         model = Profile
-        fields = ('id', 'username', 'email', 'bio', 'avatar', 'currency_preference', 'created_at', 'updated_at')
+        fields = ('id', 'username', 'email', 'role', 'bio', 'avatar', 'currency_preference', 'created_at', 'updated_at')
         read_only_fields = ('id', 'created_at', 'updated_at')
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop('user', {})
+        new_username = user_data.get('username')
+
+        if new_username and new_username != instance.user.username:
+            if User.objects.filter(username=new_username).exclude(id=instance.user.id).exists():
+                raise serializers.ValidationError({"username": ["A user with that username already exists."]})
+            instance.user.username = new_username
+            instance.user.save()
+
+        return super().update(instance, validated_data)
 
 
 class ChangePasswordSerializer(serializers.Serializer):
