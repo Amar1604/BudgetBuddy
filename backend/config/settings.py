@@ -161,8 +161,11 @@ SIMPLE_JWT = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Email Configuration - Standard SMTP (Nodemailer style)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Email Configuration - Standard SMTP (Nodemailer style) or Brevo HTTP
+if os.getenv('BREVO_API_KEY'):
+    EMAIL_BACKEND = 'config.email_backends.BrevoHTTPBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
