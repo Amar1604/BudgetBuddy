@@ -162,7 +162,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Email Configuration - Standard SMTP (Nodemailer style)
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+if os.environ.get('RENDER'):
+    # Render blocks SMTP ports, fallback to console backend in production on Render
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
