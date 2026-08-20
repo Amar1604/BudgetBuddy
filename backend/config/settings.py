@@ -161,26 +161,11 @@ SIMPLE_JWT = {
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# Email Configuration
-SENDGRID_API_KEY = os.getenv('SENDGRID_API_KEY')
-
-if SENDGRID_API_KEY:
-    # Use Anymail SendGrid HTTP backend (runs over HTTPS port 443, never blocked by Render)
-    EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
-    ANYMAIL = {
-        "SENDGRID_API_KEY": SENDGRID_API_KEY,
-    }
-    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'budgetbuddy1604@gmail.com')
-else:
-    # Use console backend on Render to avoid blocked SMTP ports if SENDGRID_API_KEY is not configured
-    if os.getenv('RENDER') or not DEBUG:
-        EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    else:
-        # Fallback to local SMTP (Gmail) for local development
-        EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-        EMAIL_HOST = 'smtp.gmail.com'
-        EMAIL_PORT = 587
-        EMAIL_USE_TLS = True
-        EMAIL_HOST_USER = 'budgetbuddy1604@gmail.com'
-        EMAIL_HOST_PASSWORD = 'asbk wlgg zobx jmpb'
-    DEFAULT_FROM_EMAIL = 'budgetbuddy1604@gmail.com'
+# Email Configuration - Standard SMTP (Nodemailer style)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', 'budgetbuddy1604@gmail.com')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', 'asbk wlgg zobx jmpb')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
