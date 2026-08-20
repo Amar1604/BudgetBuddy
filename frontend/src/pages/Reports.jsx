@@ -327,7 +327,7 @@ export default function Reports() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: 10 }}>
+              <div className="report-actions">
                 <button
                   id="live-export-pdf"
                   className="btn btn-ghost"
@@ -538,14 +538,14 @@ export default function Reports() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               {reports.map((r) => (
                 <div key={r.id} className="card" id={`report-card-${r.id}`}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="report-item-header">
                     <div>
                       <strong style={{ fontSize: 15 }}>{r.title}</strong>
                       <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
                         {r.report_type_display} · {r.date_range_start} → {r.date_range_end} · Generated {new Date(r.generated_at).toLocaleDateString()}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 6 }}>
+                    <div className="report-item-actions">
                       {expanded === r.id && (
                         <>
                           <button

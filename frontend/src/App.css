@@ -189,6 +189,24 @@
 .sidebar-overlay { display: none; }
 .dashboard-notif-header { display: flex; justify-content: space-between; font-weight: 500; gap: 12px; }
 
+.report-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.report-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+.report-item-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 @media (max-width: 992px) {
   .menu-toggle {
     display: flex;
@@ -269,6 +287,31 @@
   }
   .landing-features {
     padding: 40px 16px 60px;
+  }
+
+  /* Report Actions mobile stacks */
+  .report-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  .report-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+  .report-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .report-item-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .report-item-actions button {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
   }
 }
 
